@@ -1,10 +1,11 @@
 use std::fmt;
 
 use crate::{cubie::CubieCube, error::Error};
+use crate::moves::Move;
 
 /// Names the colors of the cube facelets: up, right, front, down, left, back.
 #[rustfmt::skip]
-#[derive(Debug, PartialEq, PartialOrd, Clone, Copy)]
+#[derive(Debug, PartialEq, PartialOrd, Clone, Copy, Eq, Hash)]
 pub enum Color {
     U, R, F, D, L, B,
 }
@@ -63,30 +64,62 @@ impl Default for FaceCube {
 impl TryFrom<&CubieCube> for FaceCube {
     type Error = Error;
     fn try_from(value: &CubieCube) -> Result<Self, Self::Error> {
-        // if !value.is_solvable() {
-        //     return Err(Error::InvalidCubieValue);
-        // }
+        // rotate D to D, F to F.
+        let mut cc = *value;
+        if cc.center[3] != Color::D {
+            let mut m = Move::D;
+            for i in 0..6 {
+                if cc.center[i] == Color::D {
+                    m = match i {
+                        0 => Move::x2,
+                        1 => Move::z,
+                        2 => Move::x3,
+                        4 => Move::z3,
+                        5 => Move::x,
+                        _ => Move::D, // should not happen.
+                    };
+                }
+            }
+            cc = cc.apply_move(m);
+        }
+        if cc.center[2] != Color::F {
+            let mut m = Move::y;
+            for i in 0..6 {
+                if cc.center[i] == Color::F {
+                    m = match i {
+                        1 => Move::y,
+                        4 => Move::y3,
+                        5 => Move::y2,
+                        _ => Move::y, // should not happen.
+                    };
+                }
+            }
+            cc = cc.apply_move(m);
+        }
+        if !cc.is_solvable() {
+            return Err(Error::InvalidCubieValue);
+        }
 
         let mut face = FaceCube::default();
 
         for (i,c) in CENTER_FACELET.iter().enumerate() {
             // println!("facelet: {:?}", *c as usize);
-            face.f[*c as usize] = CENTER_COLOR[value.center[*c as usize - 4 - i * 9 + i] as usize];
+            face.f[*c as usize] = CENTER_COLOR[cc.center[*c as usize - 4 - i * 9 + i] as usize];
         }
 
         for (i, corner_faces) in CORNER_FACELET.iter().enumerate() {
-            let corner = value.cp[i] as usize;
+            let corner = cc.cp[i] as usize;
 
             for (j, f) in corner_faces.iter().enumerate() {
-                face.f[*f as usize] = CORNER_COLOR[corner][(j + (3 - value.co[i] as usize)) % 3];
+                face.f[*f as usize] = CORNER_COLOR[corner][(j + (3 - cc.co[i] as usize)) % 3];
             }
         }
 
         for (i, edge_faces) in EDGE_FACELET.iter().enumerate() {
-            let edge = value.ep[i] as usize;
+            let edge = cc.ep[i] as usize;
 
             for (j, f) in edge_faces.iter().enumerate() {
-                face.f[*f as usize] = EDGE_COLOR[edge][(j + value.eo[i] as usize) % 2];
+                face.f[*f as usize] = EDGE_COLOR[edge][(j + cc.eo[i] as usize) % 2];
             }
         }
 

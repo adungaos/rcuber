@@ -45,7 +45,7 @@ impl TryFrom<u8> for Corner {
 /// Example: `BL` (Bottom, Left).
 #[rustfmt::skip]
 #[allow(clippy::upper_case_acronyms)]
-#[derive(Debug, PartialEq, PartialOrd, Clone, Copy)]
+#[derive(Debug, PartialEq, PartialOrd, Clone, Copy, Eq, Hash)]
 pub enum Edge {
     UR, UF, UL, UB, DR, DF, DL, DB, FR, FL, BL, BR,
 }
@@ -73,6 +73,28 @@ impl TryFrom<u8> for Edge {
             9 => Ok(FL),
             10 => Ok(BL),
             11 => Ok(BR),
+            _ => Err(Error::InvalidEdge),
+        }
+    }
+}
+
+impl TryFrom<&str> for Edge {
+    type Error = Error;
+
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        match value {
+            "UR" => Ok(UR),
+            "UF" => Ok(UF),
+            "UL" => Ok(UL),
+            "UB" => Ok(UB),
+            "DR" => Ok(DR),
+            "DF" => Ok(DF),
+            "DL" => Ok(DL),
+            "DB" => Ok(DB),
+            "FR" => Ok(FR),
+            "FL" => Ok(FL),
+            "BL" => Ok(BL),
+            "BR" => Ok(BR),
             _ => Err(Error::InvalidEdge),
         }
     }
@@ -490,7 +512,21 @@ impl CubieCube {
         }
         Ok(true)
     }
+
+    pub fn get_edges_d(&self) -> Vec<(Edge, u8, u8)>{
+        let mut i:u8 = 0;
+        let mut result = Vec::new();
+        for e in self.ep {
+            match e {
+                DR|DF|DL|DB => result.push((e, i, self.eo[i as usize])),
+                _ => {},
+            }
+            i += 1;
+        }
+        result
+    }
 }
+
 
 #[cfg(test)]
 mod test {
@@ -574,14 +610,23 @@ mod test {
     }
 
     #[test]
-    fn test_wmoves() {
+    fn test_moves() {
         let moves = vec![
-            Move::x
+            R, U, R3, U3, M, S, E, M, x, R, U, R3, U3, L, F, R
         ];
-        let state = CubieCube::default().apply_move(z);
+        let state = CubieCube::default().apply_moves(&moves);
         let fc = FaceCube::try_from(&state).unwrap();
         let _ = print_facelet(&fc);
     }
+
+    #[test]
+    fn test_get_edges_d () {
+        let cc = CubieCube::default();
+        let cc = cc.apply_moves(&vec![R, U, R3 ,U3, F, L]);
+        let d_edges = cc.get_edges_d();
+        println!("{:?}", d_edges);
+    }
+
 
     #[test]
     fn test_move_sequence() {

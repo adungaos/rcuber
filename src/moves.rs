@@ -17,7 +17,7 @@ use crate::facelet::Color;
 #[rustfmt::skip]
 #[allow(clippy::upper_case_acronyms)]
 #[allow(non_camel_case_types)]
-#[derive(Debug, PartialEq, Clone, Copy)]
+#[derive(Debug, PartialEq, Clone, Copy, Eq, Hash, PartialOrd, Ord)]
 pub enum Move {
     U, U2, U3,
     R, R2, R3,
@@ -178,6 +178,25 @@ impl Move {
             _ => self,
         }
     }
+
+    pub fn is_counter_clockwise(self) -> bool {
+        match self {
+            R3|L3|U3|D3|F3|B3|M3|E3|S3|Rw3|Lw3|Uw3|Dw3|Fw3|Bw3|x3|y3|z3 => true,
+            _ => false,
+        }
+    }
+
+    pub fn is_clockwise(self) -> bool {
+        !self.is_counter_clockwise()
+    }
+
+    pub fn is_180(self) -> bool {
+        match self {
+            R2|L2|U2|D2|F2|B2|M2|E2|S2|Rw2|Lw2|Uw2|Dw2|Fw2|Bw2|x2|y2|z2 => true,
+            _ => false,
+        }
+    }
+
 }
 
 /// The basic nine cube moves described by permutations and changes in orientation.
