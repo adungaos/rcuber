@@ -40,6 +40,23 @@ impl TryFrom<u8> for Corner {
     }
 }
 
+impl TryFrom<&str> for Corner {
+    type Error = Error;
+
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        match value {
+            "URF" => Ok(URF),
+            "UFL" => Ok(UFL),
+            "ULB" => Ok(ULB),
+            "UBR" => Ok(UBR),
+            "DFR" => Ok(DFR),
+            "DLF" => Ok(DLF),
+            "DBL" => Ok(DBL),
+            "DRB" => Ok(DRB),
+            _ => Err(Error::InvalidCorner),
+        }
+    }
+}
 /// Represents the 12 edges on the cube, described by the layer they are on.
 /// 
 /// Example: `BL` (Bottom, Left).
@@ -611,6 +628,10 @@ mod test {
 
     #[test]
     fn test_moves() {
+        let empty_move = Vec::new();
+        let cc = CubieCube::default();
+        let cc = cc.apply_moves(&empty_move);
+        assert_eq!(cc, CubieCube::default());
         let moves = vec![
             R, U, R3, U3, M, S, E, M, x, R, U, R3, U3, L, F, R
         ];

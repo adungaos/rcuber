@@ -138,7 +138,7 @@ impl CrossSolver {
             let _edge = Edge::try_from(edge.1).unwrap();
             if _edge == UR || _edge == UF || _edge == UL || _edge == UB {
                 if edge.2 == 0 {
-                    let (k, c) = edge_to_pos(edge).1;
+                    let (k, c) = edge_to_pos(edge)[1];
                     edgeposes.insert(k, c);
                     counts.insert(k, counts[&k] + 1);
                 } else {
@@ -146,14 +146,16 @@ impl CrossSolver {
                 }
             } else if _edge == DR || _edge == DF || _edge == DL || _edge == DB {
                 if edge.2 == 0 {
-                    let (k, c) = edge_to_pos(edge).1;
+                    let (k, c) = edge_to_pos(edge)[1];
                     edgeposes.insert(k, c);
                     counts.insert(k, counts[&k] + 1);
                 } else {
                     ngedges.push(edge);
                 }
             } else {
-                let (e1, e2) = edge_to_pos(edge);
+                let _ep = edge_to_pos(edge);
+                let e1 = _ep[0];
+                let e2 = _ep[1];
                 if e1.1 != centres[3] {
                     edgeposes.insert(e1.0, e1.1);
                     counts.insert(e1.0, counts[&e1.0] + 1);
@@ -165,7 +167,7 @@ impl CrossSolver {
         }
         for edge in ngedges {
             let color = edge_to_pos(edge);
-            let idx = match color.0 .0 {
+            let idx = match color[0].0 {
                 Color::L => 0,
                 Color::F => 1,
                 Color::R => 2,
@@ -180,7 +182,7 @@ impl CrossSolver {
                     _ => Color::B,
                 };
                 if !edgeposes.contains_key(&k) {
-                    let k2 = color.1 .1;
+                    let k2 = color[1].1;
                     edgeposes.insert(k, k2);
                     counts.insert(k, counts[&k] + 1);
                     br = true;
@@ -201,9 +203,9 @@ impl CrossSolver {
                     _ => Color::B,
                 };
                 if counts[&k2] > counts[&k3] {
-                    edgeposes.insert(k2, color.1 .1);
+                    edgeposes.insert(k2, color[1].1);
                 } else {
-                    edgeposes.insert(k3, color.1 .1);
+                    edgeposes.insert(k3, color[1].1);
                 }
             }
         }
@@ -309,6 +311,7 @@ where
     Vec::new()
 }
 
+/// Split Edge expression (ex UR) to two faces(ex U & R).  
 pub fn edge_to_face(edge: Edge) -> (Color, Color) {
     let edge = format!("{:?}", edge);
     let edge = edge.as_bytes();
@@ -318,14 +321,15 @@ pub fn edge_to_face(edge: Edge) -> (Color, Color) {
     )
 }
 
-pub fn edge_to_pos(edge: (Edge, u8, u8)) -> ((Color, Color), (Color, Color)) {
+/// Get the colors of Edge's faces. Ex, (Original Edge, current Position, orientation) -> (Current Face, Original Color)x2.  
+pub fn edge_to_pos(edge: (Edge, u8, u8)) -> [(Color, Color);2] {
     let _edge = Edge::try_from(edge.1).unwrap();
     let colors = edge_to_face(edge.0);
     let faces = edge_to_face(_edge);
     if edge.2 == 0 {
-        ((faces.0, colors.0), (faces.1, colors.1))
+        [(faces.0, colors.0), (faces.1, colors.1)]
     } else {
-        ((faces.1, colors.0), (faces.0, colors.1))
+        [(faces.1, colors.0), (faces.0, colors.1)]
     }
 }
 

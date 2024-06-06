@@ -1,6 +1,6 @@
 use std::{fmt, str::FromStr};
 
-use self::{Move::*};
+use self::Move::*;
 use crate::cubie::{Corner::*, CubieCube, Edge::*};
 use crate::error::Error;
 use crate::facelet::Color;
@@ -299,9 +299,11 @@ pub const S_MOVE: CubieCube = CubieCube {
     eo: [1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0],
 };
 
-
-#[cfg(test)]
-mod test {
-    use crate::moves::*;
-
+pub fn inverse_moves(moves: &Vec<Move>) -> Vec<Move> {
+    let mut rev = Vec::new();
+    for m in moves {
+        rev.push(m.get_inverse());
+    }
+    rev.reverse();
+    rev
 }
