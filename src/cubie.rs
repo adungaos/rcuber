@@ -548,6 +548,7 @@ impl CubieCube {
 #[cfg(test)]
 mod test {
     use crate::cubie::*;
+    #[cfg(feature = "term")]
     use crate::printer::print_facelet;
 
     #[test]
@@ -621,7 +622,9 @@ mod test {
             M2, E2, S2,
         ];
         let state = CubieCube::default().apply_moves(&moves);
+        #[cfg(feature = "term")]
         let fc = FaceCube::try_from(&state).unwrap();
+        #[cfg(feature = "term")]
         let _ = print_facelet(&fc);
         assert_eq!(state, M_MOVE * M_MOVE * E_MOVE * E_MOVE * S_MOVE * S_MOVE);
     }
@@ -633,11 +636,13 @@ mod test {
         let cc = cc.apply_moves(&empty_move);
         assert_eq!(cc, CubieCube::default());
         let moves = vec![
-            R, U, R3, U3, M, S, E, M, x, R, U, R3, U3, L, F, R
+            R, U, R3, U3, M, S, E, M, x, R, U, R3, U3, L, F, R, y, z
         ];
-        let state = CubieCube::default().apply_moves(&moves);
-        let fc = FaceCube::try_from(&state).unwrap();
-        let _ = print_facelet(&fc);
+        let _state = CubieCube::default().apply_moves(&moves);
+        #[cfg(feature = "term")]
+        let _fc = FaceCube::try_from(&_state).unwrap();
+        #[cfg(feature = "term")]
+        let _ = print_facelet(&_fc);
     }
 
     #[test]

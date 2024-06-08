@@ -1,12 +1,10 @@
 use std::io::stdout;
-
-use crate::facelet::{Color, FaceCube};
-
 use crossterm::{
     cursor::{MoveLeft, MoveRight, MoveUp},
     execute,
     style::{Color as TermColor, SetBackgroundColor},
 };
+use crate::facelet::{Color, FaceCube};
 
 fn color_to_termcolor(color: Color) -> TermColor {
     match color {

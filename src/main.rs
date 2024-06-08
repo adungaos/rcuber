@@ -1,14 +1,15 @@
-use ccuber::cubie::CubieCube;
-use ccuber::facelet::FaceCube;
-use ccuber::printer::print_facelet;
-use ccuber::scramble;
-use ccuber::solver::cfop::CFOPSolver;
+use rcuber::cubie::CubieCube;
+use rcuber::facelet::FaceCube;
+use rcuber::scramble;
+use rcuber::solver::cfop::CFOPSolver;
 use std::time::Instant;
-use ccuber::moves::Move::*;
-use ccuber::solver::cfop::cross::CrossSolver;
-use ccuber::solver::cfop::f2l::F2LSolver;
-use ccuber::solver::cfop::oll::OLLSolver;
-use ccuber::solver::cfop::pll::PLLSolver;
+use rcuber::moves::Move::*;
+use rcuber::solver::cfop::cross::CrossSolver;
+use rcuber::solver::cfop::f2l::F2LSolver;
+use rcuber::solver::cfop::oll::OLLSolver;
+use rcuber::solver::cfop::pll::PLLSolver;
+#[cfg(feature = "term")]
+use rcuber::printer::print_facelet;
 
 
 fn main() {
@@ -17,12 +18,16 @@ fn main() {
         let cc = CubieCube::default();
         let moves = scramble();
         let cc = cc.apply_moves(&moves);
-        // let fc = FaceCube::try_from(&cc).unwrap();
-        // let _ = print_facelet(&fc);
+        #[cfg(feature = "term")]
+        let fc = FaceCube::try_from(&cc).unwrap();
+        #[cfg(feature = "term")]
+        let _ = print_facelet(&fc);
         let mut solver = CFOPSolver{cube: cc};
         let solution = solver.solve();
-        // let fc = FaceCube::try_from(&solver.cube).unwrap();
-        // let _ = print_facelet(&fc);
+        #[cfg(feature = "term")]
+        let fc = FaceCube::try_from(&solver.cube).unwrap();
+        #[cfg(feature = "term")]
+        let _ = print_facelet(&fc);
         let duration = start.elapsed();
         println!("{:?} {:?} {:?}", moves, solution, duration);
         assert!(solver.is_solved());

@@ -1,5 +1,3 @@
-//* Module for solving Rubik's Cube F2L. */
-
 use std::collections::HashMap;
 use crate::{
     cubie::{Corner, CubieCube, Edge},
@@ -10,6 +8,31 @@ use crate::{
 
 use super::{corner_to_pos, correct_slot, edge_to_pos};
 
+/// CrossSolver for solve CFOP's F2L. MUST SOLVE CROSS FIRST!!
+/// # Example
+/// ```rust
+/// use rcuber::cubie::CubieCube;
+/// use rcuber::scramble;
+/// use rcuber::solver::cfop::cross::CrossSolver;
+/// use rcuber::solver::cfop::f2l::F2LSolver;
+///
+/// fn main() {
+///     let cc = CubieCube::default();
+///     let moves = scramble();
+///     println!("Scramble: {:?}", moves);
+///     let cc = cc.apply_moves(&moves);
+///     let mut cross = CrossSolver{cube: cc};
+///     assert!(!cross.is_solved());
+///     let solution = cross.solve();
+///     assert!(cross.is_solved());
+///     println!("Cross Solution: {:?}", solution);
+///     let mut f2l = F2LSolver{cube: cross.cube};
+///     assert!(!f2l.is_solved());
+///     let solution = f2l.solve();
+///     assert!(f2l.is_solved());
+///     println!("F2L Solution: {:?}", solution);
+/// }
+/// ```
 pub struct F2LSolver {
     pub cube: CubieCube,
 }
@@ -65,6 +88,7 @@ impl F2LSolver {
     }
 }
 
+/// Slot Type by a pair's location. 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
 pub enum SlotType {
     SOLVED,
@@ -75,6 +99,8 @@ pub enum SlotType {
     DIFFSLOT,
 }
 
+
+/// Solver for F2L's one pair (corner & edge) / slot.
 pub struct F2LPairSolver {
     pub cube: CubieCube,
     pub pair: [Color; 2],
@@ -124,7 +150,7 @@ impl F2LPairSolver {
         )
     }
 
-    /// Get the slot type of this pair.
+    /// Get the slot type of the pair.
     pub fn get_slot_type(&self) -> SlotType {
         let (corner, edge) = self.get_pair();
         let cc = CubieCube::default();
@@ -162,6 +188,7 @@ impl F2LPairSolver {
         SlotType::WRONGSLOT
     }
 
+    /// Move the paired corner & edge to U face.
     pub fn pair_to_uface(&mut self) -> Vec<Move> {
         let mut result = Vec::new();
         let mut put_acts = HashMap::new();
@@ -563,20 +590,16 @@ impl F2LPairSolver {
         Vec::new()
     }
 
-    /// Check if the cube is solved.
+    /// Check if the pair is solved.
     pub fn is_solved(&self) -> bool {
         self.get_pair() == self.estimated_position()
     }
 }
 
-
-
 #[cfg(test)]
 mod tests {
     use super::F2LSolver;
     use crate::cubie::CubieCube;
-    use crate::facelet::FaceCube;
-    use crate::printer::print_facelet;
     use crate::Move::*;
     use crate::solver::cfop::cross::CrossSolver;
 
@@ -589,12 +612,8 @@ mod tests {
         let _c = cross.solve();
         println!("{:?}", _c);
         let cc = cross.cube.clone();
-        let fc = FaceCube::try_from(&cc).unwrap();
-        let _r = print_facelet(&fc);
         let mut f2l = F2LSolver { cube: cc };
         let _f = f2l.solve();
         println!("{:?}", _f);
-        let fc = FaceCube::try_from(&f2l.cube).unwrap();
-        let _r = print_facelet(&fc);
     }
 }

@@ -1,17 +1,27 @@
+//! # RCuber 
+//! `RCuber` - crate for rubiks cube and solver (CFOP)
+
 pub mod error;
+/// Module containing 3x3 cube constants.
 pub mod constants;
-pub mod utils;
+/// Module for represent a cube on the facelet level.
 pub mod facelet;
+/// Module for represent a cube on the cubie level.
 pub mod cubie;
+/// Module for represent moves.
 pub mod moves;
-pub mod printer;
+/// Module for Solver.
 pub mod solver;
+#[cfg(feature = "term")]
+/// Module print a facelet cube on terminal witch color.
+pub mod printer;
 
 use std::str::FromStr;
-
-use moves::Move::{self, *};
 use rand::random;
 
+use moves::Move::{self, *};
+
+/// Generate a random scramble formula.
 pub fn scramble() -> Vec<Move> {
     let mut r = Vec::new();
     let mut p = B;

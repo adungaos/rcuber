@@ -1,14 +1,44 @@
-//* Module for solving Rubik's Cube OLL.*/
 use std::collections::HashMap;
 use crate::cubie::CubieCube;
 use crate::moves::Move::{self, *};
 
+/// CrossSolver for solve CFOP's OLL. MUST HAVE SOLVED CROSS & F2L!!
+/// # Example
+/// ```rust
+/// use rcuber::cubie::CubieCube;
+/// use rcuber::scramble;
+/// use rcuber::solver::cfop::cross::CrossSolver;
+/// use rcuber::solver::cfop::f2l::F2LSolver;
+/// use rcuber::solver::cfop::oll::OLLSolver;
+///
+/// fn main() {
+///     let cc = CubieCube::default();
+///     let moves = scramble();
+///     println!("Scramble: {:?}", moves);
+///     let cc = cc.apply_moves(&moves);
+///     let mut cross = CrossSolver{cube: cc};
+///     assert!(!cross.is_solved());
+///     let solution = cross.solve();
+///     assert!(cross.is_solved());
+///     println!("Cross Solution: {:?}", solution);
+///     let mut f2l = F2LSolver{cube: cross.cube};
+///     assert!(!f2l.is_solved());
+///     let solution = f2l.solve();
+///     assert!(f2l.is_solved());
+///     println!("F2L Solution: {:?}", solution);
+///     let mut oll = OLLSolver::new(f2l.cube);
+///     let solution = oll.solve();
+///     assert!(oll.is_solved());
+///     println!("OLL Solution: {:?}", solution);
+/// }
+/// ```
 pub struct OLLSolver {
     pub cube: CubieCube,
     algos: HashMap<[u8; 12], Vec<Move>>,
 }
 
 impl OLLSolver {
+    /// Construct the OLLSolver.
     pub fn new(cube: CubieCube) -> Self {
         let mut algos = HashMap::new();
         // OLL1
@@ -336,9 +366,7 @@ impl OLLSolver {
 #[cfg(test)]
 mod tests {
     use crate::cubie::CubieCube;
-    use crate::facelet::FaceCube;
     use crate::moves::Move::*;
-    use crate::printer::print_facelet;
     use crate::solver::cfop::cross::CrossSolver;
     use crate::solver::cfop::f2l::F2LSolver;
     use crate::solver::cfop::oll::OLLSolver;
@@ -352,18 +380,12 @@ mod tests {
         let _c = cross.solve();
         println!("{:?}", _c);
         let cc = cross.cube.clone();
-        let fc = FaceCube::try_from(&cc).unwrap();
-        let _r = print_facelet(&fc);
         let mut f2l = F2LSolver { cube: cc };
         let _f = f2l.solve();
         println!("{:?}", _f);
-        let fc = FaceCube::try_from(&f2l.cube).unwrap();
-        let _r = print_facelet(&fc);
         let cc = f2l.cube.clone();
         let mut oll = OLLSolver::new(cc);
         let _o = oll.solve();
         println!("{:?}", _o);
-        let fc = FaceCube::try_from(&oll.cube).unwrap();
-        let _r = print_facelet(&fc);
     }
 }

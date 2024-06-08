@@ -1,4 +1,3 @@
-use std::io;
 use thiserror::Error;
 
 /// Errors.
@@ -18,6 +17,4 @@ pub enum Error {
     InvalidFaceletValue,
     #[error("Invalid cubie reperesentation")]
     InvalidCubieValue,
-    #[error("{0}")]
-    IOError(#[from] io::Error),
 }

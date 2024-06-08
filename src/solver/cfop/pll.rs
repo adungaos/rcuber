@@ -1,4 +1,3 @@
-//* Module for solving Rubik's Cube PLL.*/
 use std::collections::HashMap;
 
 use super::{corner_to_face, edge_to_face};
@@ -6,12 +5,48 @@ use crate::cubie::CubieCube;
 use crate::facelet::Color;
 use crate::moves::Move::{self, *};
 
+/// CrossSolver for solve CFOP's PLL. MUST HAVE SOLVED CROSS & F2L & OLL!!
+/// # Example
+/// ```rust
+/// use rcuber::cubie::CubieCube;
+/// use rcuber::scramble;
+/// use rcuber::solver::cfop::cross::CrossSolver;
+/// use rcuber::solver::cfop::f2l::F2LSolver;
+/// use rcuber::solver::cfop::oll::OLLSolver;
+/// use rcuber::solver::cfop::pll::PLLSolver;
+///
+/// fn main() {
+///     let cc = CubieCube::default();
+///     let moves = scramble();
+///     println!("Scramble: {:?}", moves);
+///     let cc = cc.apply_moves(&moves);
+///     let mut cross = CrossSolver{cube: cc};
+///     assert!(!cross.is_solved());
+///     let solution = cross.solve();
+///     assert!(cross.is_solved());
+///     println!("Cross Solution: {:?}", solution);
+///     let mut f2l = F2LSolver{cube: cross.cube};
+///     assert!(!f2l.is_solved());
+///     let solution = f2l.solve();
+///     assert!(f2l.is_solved());
+///     println!("F2L Solution: {:?}", solution);
+///     let mut oll = OLLSolver::new(f2l.cube);
+///     let solution = oll.solve();
+///     assert!(oll.is_solved());
+///     println!("OLL Solution: {:?}", solution);
+///     let mut pll = PLLSolver::new(oll.cube);
+///     let solution = pll.solve();
+///     assert!(pll.is_solved());
+///     println!("PLL Solution: {:?}", solution);
+/// }
+/// ```
 pub struct PLLSolver<'a> {
     pub cube: CubieCube,
     algos: HashMap<&'a str, Vec<Move>>,
 }
 
 impl<'a> PLLSolver<'a> {
+    /// Construct the PLLSolver.
     pub fn new(cube: CubieCube) -> Self {
         let mut algos = HashMap::new();
         algos.insert(
@@ -191,7 +226,8 @@ impl<'a> PLLSolver<'a> {
     }
 }
 
-pub fn rotate_color(color: Color, r: usize) -> Color {
+/// rotate color for cover all PLL cases.
+fn rotate_color(color: Color, r: usize) -> Color {
     match color {
         Color::L => {
             match r {
@@ -232,9 +268,7 @@ pub fn rotate_color(color: Color, r: usize) -> Color {
 #[cfg(test)]
 mod tests {
     use crate::cubie::CubieCube;
-    use crate::facelet::FaceCube;
     use crate::moves::Move::*;
-    use crate::printer::print_facelet;
     use crate::solver::cfop::cross::CrossSolver;
     use crate::solver::cfop::f2l::F2LSolver;
     use crate::solver::cfop::oll::OLLSolver;
@@ -253,23 +287,17 @@ mod tests {
             panic!("Cross Error! {:?} : {:?}", moves, _c);
         }
         let cc = cross.cube.clone();
-        let fc = FaceCube::try_from(&cc).unwrap();
-        let _r = print_facelet(&fc);
         let mut f2l = F2LSolver { cube: cc };
         let _f = f2l.solve();
         let cc = f2l.cube.clone();
         if !f2l.is_solved() {
             panic!("F2L Error! {:?} : {:?}: {:?}", moves, _c, _f);
         }
-        let fc = FaceCube::try_from(&cc).unwrap();
-        let _r = print_facelet(&fc);
         let mut oll = OLLSolver::new(cc);
         let _o = oll.solve();
         if !oll.is_solved() {
             panic!("OLL Error! {:?} : {:?} : {:?} : {:?}", moves, _c, _f, _o);
         }
-        let fc = FaceCube::try_from(&oll.cube).unwrap();
-        let _r = print_facelet(&fc);
         let cc = oll.cube.clone();
         let mut pll = PLLSolver::new(cc);
         let _p = pll.solve();
@@ -279,7 +307,5 @@ mod tests {
                 moves, _c, _f, _o, _p
             );
         }
-        let fc = FaceCube::try_from(&pll.cube).unwrap();
-        let _r = print_facelet(&fc);
     }
 }

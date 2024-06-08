@@ -13,6 +13,25 @@ use crate::{
 
 use super::{a_star_search, edge_to_pos};
 
+/// CrossSolver for solve CFOP's cross.
+/// # Example
+/// ```rust
+/// use rcuber::cubie::CubieCube;
+/// use rcuber::scramble;
+/// use rcuber::solver::cfop::cross::CrossSolver;
+///
+/// fn main() {
+///     let cc = CubieCube::default();
+///     let moves = scramble();
+///     println!("Scramble: {:?}", moves);
+///     let cc = cc.apply_moves(&moves);
+///     let mut cross = CrossSolver{cube: cc};
+///     assert!(!cross.is_solved());
+///     let solution = cross.solve();
+///     assert!(cross.is_solved());
+///     println!("Cross Solution: {:?}", solution);
+/// }
+/// ```
 pub struct CrossSolver {
     pub cube: CubieCube,
 }

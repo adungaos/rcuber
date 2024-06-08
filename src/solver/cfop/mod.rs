@@ -1,31 +1,57 @@
 use std::collections::HashMap;
 
-use cross::CrossSolver;
-use f2l::F2LSolver;
-use oll::OLLSolver;
-use pll::PLLSolver;
+pub use cross::CrossSolver;
+pub use f2l::F2LSolver;
+pub use oll::OLLSolver;
+pub use pll::PLLSolver;
 
-use crate::{cubie::{Corner, CubieCube, Edge}, facelet::Color, moves::Move};
+use crate::{
+    cubie::{Corner, CubieCube, Edge},
+    facelet::Color,
+    moves::Move,
+};
 
+/// Module for CFOP's first step, solving Rubik's Cube Cross.
 pub mod cross;
+/// Module for CFOP's step 2, solving Rubik's Cube F2L.
 pub mod f2l;
+/// Module for CFOP's step 3, solving Rubik's Cube OLL.
 pub mod oll;
+/// Module for CFOP's last step, solving Rubik's Cube PLL.
 pub mod pll;
 
+/// CFOPSolver for solve a cube use CFOP method.
+/// # Example
+/// ```rust
+/// use rcuber::cubie::CubieCube;
+/// use rcuber::scramble;
+/// use rcuber::solver::cfop::CFOPSolver;
+///
+/// fn main() {
+///     let cc = CubieCube::default();
+///     let moves = scramble();
+///     let cc = cc.apply_moves(&moves);
+///     let mut solver = CFOPSolver{cube: cc};
+///     assert!(!solver.is_solved());
+///     let solution = solver.solve();
+///     assert!(solver.is_solved());
+///     println!("Scramble: {:?}\nSolution: {:?}", moves, solution);
+/// }
+/// ```
 pub struct CFOPSolver {
     pub cube: CubieCube,
 }
 
 impl CFOPSolver {
-    pub fn solve(&mut self) ->Vec<Move>{
+    pub fn solve(&mut self) -> Vec<Move> {
         let mut solution = Vec::new();
-        
-        let mut cross = CrossSolver{cube: self.cube};
+
+        let mut cross = CrossSolver { cube: self.cube };
         let mut cs = cross.solve();
         assert!(cross.is_solved());
         solution.append(&mut cs);
 
-        let mut f2l = F2LSolver{cube: cross.cube};
+        let mut f2l = F2LSolver { cube: cross.cube };
         let mut fs = f2l.solve();
         assert!(f2l.is_solved());
         solution.append(&mut fs);
@@ -52,7 +78,6 @@ impl CFOPSolver {
         false
     }
 }
-
 
 /// This is a searching function of A*
 pub fn a_star_search<'a, S, V, G>(
@@ -120,7 +145,7 @@ pub fn edge_to_face(edge: Edge) -> (Color, Color) {
 }
 
 /// Get the colors of Edge's faces. Ex, (Original Edge, current Position, orientation) -> (Current Face, Original Color)x2.  
-pub fn edge_to_pos(edge: (Edge, u8, u8)) -> [(Color, Color);2] {
+pub fn edge_to_pos(edge: (Edge, u8, u8)) -> [(Color, Color); 2] {
     let _edge = Edge::try_from(edge.1).unwrap();
     let colors = edge_to_face(edge.0);
     let faces = edge_to_face(_edge);
@@ -131,9 +156,8 @@ pub fn edge_to_pos(edge: (Edge, u8, u8)) -> [(Color, Color);2] {
     }
 }
 
-
 /// Correct slot vector's order.
-pub fn correct_slot(slot: [Color; 2]) -> [Color;2] {
+pub fn correct_slot(slot: [Color; 2]) -> [Color; 2] {
     match slot {
         [Color::R, Color::F] => [Color::F, Color::R],
         [Color::R, Color::B] => [Color::B, Color::R],
@@ -142,6 +166,7 @@ pub fn correct_slot(slot: [Color; 2]) -> [Color;2] {
         _ => slot,
     }
 }
+
 /// Split Corner expression (ex URF) to three faces(ex U, R, F).  
 pub fn corner_to_face(corner: Corner) -> (Color, Color, Color) {
     let corner = format!("{:?}", corner);
@@ -153,7 +178,8 @@ pub fn corner_to_face(corner: Corner) -> (Color, Color, Color) {
     )
 }
 
-/// Get the colors of Corner's faces. Ex, (Original Corner, current Position, orientation) -> (Current Face, Original Color)x3.  
+/// Get the colors of Corner's faces.
+/// Ex, (Original Corner, current Position, orientation) -> (Current Face: Original Color)x3.  
 pub fn corner_to_pos(corner: (Corner, u8, u8)) -> HashMap<Color, Color> {
     let _corner = Corner::try_from(corner.1).unwrap();
     let colors = corner_to_face(corner.0);
