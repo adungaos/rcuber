@@ -49,33 +49,32 @@ impl CFOPSolver {
         let mut cross = CrossSolver { cube: self.cube };
         let mut cs = cross.solve();
         assert!(cross.is_solved());
+        self.cube = cross.cube;
         solution.append(&mut cs);
 
-        let mut f2l = F2LSolver { cube: cross.cube };
+        let mut f2l = F2LSolver { cube: self.cube };
         let mut fs = f2l.solve();
         assert!(f2l.is_solved());
+        self.cube = f2l.cube;
         solution.append(&mut fs);
 
-        let mut oll = OLLSolver::new(f2l.cube);
+        let mut oll = OLLSolver::new(self.cube);
         let mut os = oll.solve();
         assert!(oll.is_solved());
+        self.cube = oll.cube;
         solution.append(&mut os);
 
-        let mut pll = PLLSolver::new(oll.cube);
+        let mut pll = PLLSolver::new(self.cube);
         let mut ps = pll.solve();
         assert!(pll.is_solved());
+        self.cube = pll.cube;
         solution.append(&mut ps);
 
-        self.cube = pll.cube;
         solution
     }
 
     pub fn is_solved(&self) -> bool {
-        let cc = CubieCube::default();
-        if cc == self.cube {
-            return true;
-        }
-        false
+        self.cube == CubieCube::default()
     }
 }
 
@@ -199,4 +198,24 @@ pub fn corner_to_pos(corner: (Corner, u8, u8)) -> HashMap<Color, Color> {
         r.insert(faces.2, colors.0);
     }
     r
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{cubie::CubieCube, scramble, solver::CFOPSolver};
+
+    #[test]
+    fn test_cfop() {
+        let cc = CubieCube::default();
+        let moves = scramble();
+        let cc = cc.apply_moves(&moves);
+        let cc2 = cc.clone();
+        let mut solver = CFOPSolver { cube: cc };
+        let solution = solver.solve();
+        assert!(solver.is_solved());
+
+        let cc2 = cc2.apply_moves(&solution);
+        assert_eq!(cc2, CubieCube::default());
+        println!("Scramble: {:?}\nSolution: {:?}", moves, solution);
+    }
 }

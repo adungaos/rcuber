@@ -260,7 +260,7 @@ pub const EDGE_COLOR: [[Color; 2]; 12] = [
 ];
 
 #[cfg(test)]
-mod test {
+mod tests {
     use crate::cubie::{Corner::*, Edge::*, SOLVED_CUBIE_CUBE};
     use crate::facelet::*;
 

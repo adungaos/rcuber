@@ -426,7 +426,7 @@ pub fn optimise_moves(moves: &Vec<Move>) -> Vec<Move> {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::{optimise_moves, Move::*};
 
     #[test]

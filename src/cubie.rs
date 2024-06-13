@@ -545,7 +545,7 @@ impl CubieCube {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use crate::cubie::*;
     #[cfg(feature = "term")]
     use crate::printer::print_facelet;

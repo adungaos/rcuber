@@ -233,7 +233,7 @@ impl DaisySolver {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use crate::{cubie::CubieCube, scramble, solver::lbl::daisy::DaisySolver};
 
     #[test]

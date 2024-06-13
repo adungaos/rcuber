@@ -1,34 +1,32 @@
-
-/// Module for DaisySolver of LBL(Layer by Layer) method(optional).
-pub mod daisy;
-/// Module for CrossSolver of LBL(Layer by Layer) method(step 1).
-pub mod cross;
 /// Module for BottomCornerSolver of LBL(Layer by Layer) method(step 2).
 pub mod bottom;
-/// Module for MiddleEdgeSolver of LBL(Layer by Layer) method(step 3).
-pub mod middle;
-/// Module for EOLLSolver(Edge Orientation of Last Layer) of LBL(Layer by Layer) method(step 4).
-pub mod eoll;
 /// Module for COLLSolver(Corner Orientation of Last Layer) of LBL(Layer by Layer) method(step 5).
 pub mod coll;
 /// Module for CPLLSolver(Corner Permutation of Last Layer) of LBL(Layer by Layer) method(step 6).
 pub mod cpll;
+/// Module for CrossSolver of LBL(Layer by Layer) method(step 1).
+pub mod cross;
+/// Module for DaisySolver of LBL(Layer by Layer) method(optional).
+pub mod daisy;
+/// Module for EOLLSolver(Edge Orientation of Last Layer) of LBL(Layer by Layer) method(step 4).
+pub mod eoll;
 /// Module for EPLLSolver(Edge Permutation of Last Layer) of LBL(Layer by Layer) method(step 7).
 pub mod epll;
-
+/// Module for MiddleEdgeSolver of LBL(Layer by Layer) method(step 3).
+pub mod middle;
 
 use crate::facelet::Color;
 use crate::moves::optimise_moves;
 use crate::{cubie::CubieCube, moves::Move};
 
-pub use daisy::DaisySolver;
-pub use cross::CrossSolver;
 pub use bottom::BottomCornerSolver;
-pub use middle::MiddleEdgeSolver;
-pub use eoll::EOLLSolver;
 pub use coll::COLLSolver;
 pub use cpll::CPLLSolver;
+pub use cross::CrossSolver;
+pub use daisy::DaisySolver;
+pub use eoll::EOLLSolver;
 pub use epll::EPLLSolver;
+pub use middle::MiddleEdgeSolver;
 
 /// LBLSolver for solve a cube use LBL(Layer by Layer) method.
 /// # Example
@@ -47,7 +45,7 @@ pub use epll::EPLLSolver;
 ///     println!("Scramble: {:?}\nSolution: {:?}", moves, solution);
 /// }
 /// ```
-pub struct LBLSolver{
+pub struct LBLSolver {
     pub cube: CubieCube,
 }
 
@@ -113,5 +111,25 @@ pub fn get_put_move(i: usize, step: Move) -> Vec<Move> {
         2 => vec![step * 2],
         3 => vec![step * 3],
         _ => vec![],
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{cubie::CubieCube, scramble, solver::LBLSolver};
+    
+    #[test]
+    fn test_lbl() {
+        let cc = CubieCube::default();
+        let moves = scramble();
+        let cc = cc.apply_moves(&moves);
+        let cc2 = cc.clone();
+        let mut solver = LBLSolver { cube: cc };
+        let solution = solver.solve();
+        assert!(solver.is_solved());
+
+        let cc2 = cc2.apply_moves(&solution);
+        assert_eq!(cc2, CubieCube::default());
+        println!("Scramble: {:?}\nSolution: {:?}", moves, solution);
     }
 }

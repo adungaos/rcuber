@@ -117,7 +117,7 @@ pub fn get_corners_u(cc: &CubieCube) -> Vec<(Corner, u8, u8)> {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use crate::{
         cubie::CubieCube,
         moves::optimise_moves,
