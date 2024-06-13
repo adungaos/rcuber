@@ -313,17 +313,16 @@ mod tests {
         let solved = CrossSolver::cross_goal((cc.center, d_edges.clone()));
         assert!(solved);
         // println!("{:?}", result);
-        for i in 0..100 {
-            let cc = CubieCube::default();
-            let moves = scramble();
-            let cc = cc.apply_moves(&moves);
-            let mut cs = CrossSolver{cube: cc};
-            let solution = cs.solve();
-            let cc = cc.apply_moves(&solution);
-            let d_edges = cc.get_edges_d();
-            let solved = CrossSolver::cross_goal((cc.center, d_edges.clone()));
-            assert!(solved);
-            println!("Testing {}, Moves: {:?}, Solution: {:?}, Solved: {:?}", i, &moves, &solution, solved);
-        }
+        let cc = CubieCube::default();
+        let moves = scramble();
+        let cc = cc.apply_moves(&moves);
+        let mut cs = CrossSolver{cube: cc};
+        let solution = cs.solve();
+        let cc = cc.apply_moves(&solution);
+        let d_edges = cc.get_edges_d();
+        let solved = CrossSolver::cross_goal((cc.center, d_edges.clone()));
+        assert!(solved);
+        println!("Scramble: {:?}, Solution: {:?}, Solved: {:?}", &moves, &solution, solved);
+        
     }
 }

@@ -165,7 +165,7 @@ impl Mul for CubieCube {
             res.eo[i] = (self.eo[rhs.ep[i] as usize] + rhs.eo[i]) % 2;
         }
 
-        for i in 0..6{
+        for i in 0..6 {
             res.center[i] = self.center[rhs.center[i] as usize];
         }
         res
@@ -187,7 +187,6 @@ impl fmt::Display for CubieCube {
         write!(f, "{s}")
     }
 }
-
 
 impl From<&Vec<Move>> for CubieCube {
     fn from(moves: &Vec<Move>) -> Self {
@@ -265,6 +264,7 @@ impl CubieCube {
     /// Applies a move to the current state.
     pub fn apply_move(self, move_name: Move) -> Self {
         let move_state = match move_name {
+            N => N_MOVE,
             U => U_MOVE,
             U2 => U_MOVE * U_MOVE,
             U3 => U_MOVE * U_MOVE * U_MOVE,
@@ -530,20 +530,19 @@ impl CubieCube {
         Ok(true)
     }
 
-    pub fn get_edges_d(&self) -> Vec<(Edge, u8, u8)>{
-        let mut i:u8 = 0;
+    pub fn get_edges_d(&self) -> Vec<(Edge, u8, u8)> {
+        let mut i: u8 = 0;
         let mut result = Vec::new();
         for e in self.ep {
             match e {
-                DR|DF|DL|DB => result.push((e, i, self.eo[i as usize])),
-                _ => {},
+                DR | DF | DL | DB => result.push((e, i, self.eo[i as usize])),
+                _ => {}
             }
             i += 1;
         }
         result
     }
 }
-
 
 #[cfg(test)]
 mod test {
@@ -618,9 +617,7 @@ mod test {
 
     #[test]
     fn test_move_mes() {
-        let moves: Vec<Move> = vec![
-            M2, E2, S2,
-        ];
+        let moves: Vec<Move> = vec![M2, E2, S2];
         let state = CubieCube::default().apply_moves(&moves);
         #[cfg(feature = "term")]
         let fc = FaceCube::try_from(&state).unwrap();
@@ -635,9 +632,7 @@ mod test {
         let cc = CubieCube::default();
         let cc = cc.apply_moves(&empty_move);
         assert_eq!(cc, CubieCube::default());
-        let moves = vec![
-            R, U, R3, U3, M, S, E, M, x, R, U, R3, U3, L, F, R, y, z
-        ];
+        let moves = vec![R, U, R3, U3, M, S, E, M, x, R, U, R3, U3, L, F, R, y, z];
         let _state = CubieCube::default().apply_moves(&moves);
         #[cfg(feature = "term")]
         let _fc = FaceCube::try_from(&_state).unwrap();
@@ -646,13 +641,21 @@ mod test {
     }
 
     #[test]
-    fn test_get_edges_d () {
+    fn test_move_n() {
         let cc = CubieCube::default();
-        let cc = cc.apply_moves(&vec![R, U, R3 ,U3, F, L]);
-        let d_edges = cc.get_edges_d();
-        println!("{:?}", d_edges);
+        let cc = cc.apply_move(N);
+        assert_eq!(cc, CubieCube::default());
+        let moves = vec![R, U, R3, U3];
+        let cc = cc.apply_moves(&moves);
+        let nc = cc.apply_move(N);
+        assert_eq!(nc, cc);
+        let moves = vec![R, U, R3, U3, N, R, U, R3];
+        let cc = CubieCube::default();
+        let ncc = cc.apply_moves(&moves);
+        let moves = vec![R, U, R3, U3, R, U, R3];
+        let cc = cc.apply_moves(&moves);
+        assert_eq!(ncc, cc);
     }
-
 
     #[test]
     fn test_move_sequence() {
@@ -682,6 +685,14 @@ mod test {
         };
 
         assert_eq!(state, expected);
+    }
+
+    #[test]
+    fn test_get_edges_d() {
+        let cc = CubieCube::default();
+        let cc = cc.apply_moves(&vec![R, U, R3, U3, F, L]);
+        let d_edges = cc.get_edges_d();
+        println!("{:?}", d_edges);
     }
 
     #[test]

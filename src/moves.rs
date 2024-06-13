@@ -1,3 +1,4 @@
+use std::ops::{Add, Mul};
 use std::{fmt, str::FromStr};
 
 use self::Move::*;
@@ -19,6 +20,7 @@ use crate::facelet::Color;
 #[allow(non_camel_case_types)]
 #[derive(Debug, PartialEq, Clone, Copy, Eq, Hash, PartialOrd, Ord)]
 pub enum Move {
+    N,
     U, U2, U3,
     R, R2, R3,
     F, F2, F3,
@@ -129,6 +131,77 @@ impl FromStr for Move {
     }
 }
 
+impl Add for Move {
+    type Output = Move;
+    fn add(self, rhs: Self) -> Self::Output {
+        if self == N {
+            return rhs;
+        }
+        if rhs == N {
+            return self;
+        }
+        let ms = format!("{:?}", self);
+        let ms = ms.as_bytes();
+        let (mf, mn) = match ms.last().unwrap().is_ascii_digit() {
+            true => {
+                let (n, m) = ms.split_last().unwrap();
+                let n = (char::from(*n)).to_digit(10).unwrap();
+                let m: String = m.iter().map(|c| char::from(*c)).collect();
+                (m, n)
+            }
+            false => (ms.iter().map(|c| char::from(*c)).collect(), 1),
+        };
+
+        let rms = format!("{:?}", rhs);
+        let rms = rms.as_bytes();
+        let (rmf, rmn) = match rms.last().unwrap().is_ascii_digit() {
+            true => {
+                let (n, m) = rms.split_last().unwrap();
+                let n = (char::from(*n)).to_digit(10).unwrap();
+                let m: String = m.iter().map(|c| char::from(*c)).collect();
+                (m, n)
+            }
+            false => (rms.iter().map(|c| char::from(*c)).collect(), 1),
+        };
+
+        assert!(mf == rmf);
+        let mn = (mn + rmn) % 4;
+        match mn {
+            1 => Move::from_str(&format!("{}", mf)).unwrap(),
+            2 => Move::from_str(&format!("{}2", mf)).unwrap(),
+            3 => Move::from_str(&format!("{}'", mf)).unwrap(),
+            _ => N,
+        }
+    }
+}
+
+impl Mul<usize> for Move {
+    type Output = Move;
+    fn mul(self, rhs: usize) -> Self::Output {
+        if self == N {
+            return N;
+        }
+        let ms = format!("{:?}", self);
+        let ms = ms.as_bytes();
+        let (mf, mn) = match ms.last().unwrap().is_ascii_digit() {
+            true => {
+                let (n, m) = ms.split_last().unwrap();
+                let n = (char::from(*n)).to_digit(10).unwrap();
+                let m: String = m.iter().map(|c| char::from(*c)).collect();
+                (m, n)
+            }
+            false => (ms.iter().map(|c| char::from(*c)).collect(), 1),
+        };
+        let mn = mn as usize * rhs % 4;
+        match mn {
+            1 => Move::from_str(&format!("{}", mf)).unwrap(),
+            2 => Move::from_str(&format!("{}2", mf)).unwrap(),
+            3 => Move::from_str(&format!("{}'", mf)).unwrap(),
+            _ => N,
+        }
+    }
+}
+
 #[rustfmt::skip]
 impl Move {
     pub fn is_inverse(&self, other: Move) -> bool {
@@ -197,10 +270,34 @@ impl Move {
         }
     }
 
+    pub fn get_face(&self) -> String {
+        let ms = format!("{:?}", self);
+        let ms = ms.as_bytes();
+        match ms.last().unwrap().is_ascii_digit() {
+            true => {
+                let (_n, m) = ms.split_last().unwrap();
+                let m: String = m.iter().map(|c| char::from(*c)).collect();
+                m
+            }
+            false => ms.iter().map(|c| char::from(*c)).collect(),
+        }
+    }
+
 }
 
-/// The basic nine cube moves described by permutations and changes in orientation.
-/// 
+/// The basic ten cube moves described by permutations and changes in orientation.
+///
+/// N_MOVE
+pub const N_MOVE: CubieCube = CubieCube {
+    center: [Color::U, Color::R, Color::F, Color::D, Color::L, Color::B],
+    cp: [URF, UFL, ULB, UBR, DFR, DLF, DBL, DRB],
+    co: [0, 0, 0, 0, 0, 0, 0, 0],
+    ep: [UR, UF, UL, UB, DR, DF, DL, DB, FR, FL, BL, BR],
+    eo: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+};
+
+/// The basic ten cube moves described by permutations and changes in orientation.
+///
 /// U_MOVE
 pub const U_MOVE: CubieCube = CubieCube {
     center: [Color::U, Color::R, Color::F, Color::D, Color::L, Color::B],
@@ -210,8 +307,8 @@ pub const U_MOVE: CubieCube = CubieCube {
     eo: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
 };
 
-/// The basic nine cube moves described by permutations and changes in orientation.
-/// 
+/// The basic ten cube moves described by permutations and changes in orientation.
+///
 /// R_MOVE
 pub const R_MOVE: CubieCube = CubieCube {
     center: [Color::U, Color::R, Color::F, Color::D, Color::L, Color::B],
@@ -221,8 +318,8 @@ pub const R_MOVE: CubieCube = CubieCube {
     eo: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],     //changes of the permutations of the edges
 };
 
-/// The basic nine cube moves described by permutations and changes in orientation.
-/// 
+/// The basic ten cube moves described by permutations and changes in orientation.
+///
 /// F_MOVE
 pub const F_MOVE: CubieCube = CubieCube {
     center: [Color::U, Color::R, Color::F, Color::D, Color::L, Color::B],
@@ -232,8 +329,8 @@ pub const F_MOVE: CubieCube = CubieCube {
     eo: [0, 1, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0],
 };
 
-/// The basic nine cube moves described by permutations and changes in orientation.
-/// 
+/// The basic ten cube moves described by permutations and changes in orientation.
+///
 /// D_MOVE
 pub const D_MOVE: CubieCube = CubieCube {
     center: [Color::U, Color::R, Color::F, Color::D, Color::L, Color::B],
@@ -243,8 +340,8 @@ pub const D_MOVE: CubieCube = CubieCube {
     eo: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
 };
 
-/// The basic nine cube moves described by permutations and changes in orientation.
-/// 
+/// The basic ten cube moves described by permutations and changes in orientation.
+///
 /// L_MOVE
 pub const L_MOVE: CubieCube = CubieCube {
     center: [Color::U, Color::R, Color::F, Color::D, Color::L, Color::B],
@@ -254,8 +351,8 @@ pub const L_MOVE: CubieCube = CubieCube {
     eo: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
 };
 
-/// The basic nine cube moves described by permutations and changes in orientation.
-/// 
+/// The basic ten cube moves described by permutations and changes in orientation.
+///
 /// B_MOVE
 pub const B_MOVE: CubieCube = CubieCube {
     center: [Color::U, Color::R, Color::F, Color::D, Color::L, Color::B],
@@ -265,8 +362,8 @@ pub const B_MOVE: CubieCube = CubieCube {
     eo: [0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 1],
 };
 
-/// The basic nine cube moves described by permutations and changes in orientation.
-/// 
+/// The basic ten cube moves described by permutations and changes in orientation.
+///
 /// M_MOVE
 pub const M_MOVE: CubieCube = CubieCube {
     center: [Color::B, Color::R, Color::U, Color::F, Color::L, Color::D],
@@ -276,8 +373,8 @@ pub const M_MOVE: CubieCube = CubieCube {
     eo: [0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0],
 };
 
-/// The basic nine cube moves described by permutations and changes in orientation.
-/// 
+/// The basic ten cube moves described by permutations and changes in orientation.
+///
 /// E_MOVE
 pub const E_MOVE: CubieCube = CubieCube {
     center: [Color::U, Color::F, Color::L, Color::D, Color::B, Color::R],
@@ -287,9 +384,8 @@ pub const E_MOVE: CubieCube = CubieCube {
     eo: [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1],
 };
 
-
-/// The basic nine cube moves described by permutations and changes in orientation.
-/// 
+/// The basic ten cube moves described by permutations and changes in orientation.
+///
 /// S_MOVE
 pub const S_MOVE: CubieCube = CubieCube {
     center: [Color::L, Color::U, Color::F, Color::R, Color::D, Color::B],
@@ -306,4 +402,59 @@ pub fn inverse_moves(moves: &Vec<Move>) -> Vec<Move> {
     }
     rev.reverse();
     rev
+}
+
+pub fn optimise_moves(moves: &Vec<Move>) -> Vec<Move> {
+    let mut result = Vec::new();
+    for m in moves {
+        let p = *result.last().unwrap_or(&N);
+        if *m == N {
+            continue;
+        }
+        if m.get_face() == p.get_face() {
+            let _m = *m + p;
+            result.pop();
+            if _m == N {
+                continue;
+            }
+            result.push(_m);
+        } else {
+            result.push(*m);
+        }
+    }
+    result
+}
+
+#[cfg(test)]
+mod test {
+    use super::{optimise_moves, Move::*};
+
+    #[test]
+    fn test_move_add_mul() {
+        assert_eq!(R, R + N);
+        assert_eq!(R, N + R);
+        let mv = U;
+        let mv2 = mv + mv;
+        assert_eq!(mv2, U2);
+        let mv3 = mv2 + mv;
+        assert_eq!(mv3, U3);
+        let mv2 = mv3 + mv3 + mv2 + mv2;
+        assert_eq!(mv2, U2);
+        assert_eq!(R2 + R2, N);
+        assert_eq!(Rw2 + Rw, Rw3);
+        assert_eq!(y3 + y2, y);
+        assert_eq!(N * 3, N);
+        assert_eq!(R * 3, R3);
+        assert_eq!(R * 97, R);
+        assert_eq!(R * 100, N);
+        assert_eq!(R3 * 3, R);
+        assert_eq!(R2 * 6, N);
+    }
+
+    #[test]
+    fn test_optimise() {
+        let moves = vec![N, R, R, U, R3, U3, R, R, U, U, R3, N, L, L3];
+        let moves = optimise_moves(&moves);
+        println!("{:?}", moves);
+    }
 }
