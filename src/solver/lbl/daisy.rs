@@ -1,13 +1,15 @@
-
 use std::str::FromStr;
 
-use crate::facelet::Color;
-use crate::{cubie::CubieCube, moves::Move::{self, *}};
+use super::{get_move_face, get_put_move};
 use crate::cubie::Edge::{self, *};
 use crate::error::Error;
-use super::{get_move_face, get_put_move};
+use crate::facelet::Color;
+use crate::{
+    cubie::CubieCube,
+    moves::Move::{self, *},
+};
 
-/// DaisySolver for LBL(Layer by Layer) method.
+/// DaisySolver for LBL(Layer by Layer) method, i.e, solve orientation of bottom edges(DR, DF, DL, DB) at Up face, no matter the order.
 /// # Example
 /// ```rust
 /// use rcuber::cubie::CubieCube;
@@ -27,7 +29,7 @@ use super::{get_move_face, get_put_move};
 ///     println!("Scramble: {:?}\nSolution: {:?}", moves, _cs);
 /// }
 /// ```
-pub struct DaisySolver{
+pub struct DaisySolver {
     pub cube: CubieCube,
 }
 
@@ -40,7 +42,7 @@ impl DaisySolver {
             let _edge = self.get_edge(edge).unwrap();
             if _edge.1 <= 3 && _edge.2 == 0 {
                 // d_edges.push((edge, 0));
-            } else if _edge.1 >=8 {
+            } else if _edge.1 >= 8 {
                 d_edges.push((edge, 1));
             } else if (_edge.1 >= 4 && _edge.1 < 8) && _edge.2 == 0 {
                 d_edges.push((edge, 2));
@@ -48,7 +50,7 @@ impl DaisySolver {
                 d_edges.push((edge, 3));
             }
         }
-        d_edges.sort_by_key(|e|e.1);
+        d_edges.sort_by_key(|e| e.1);
         for edge in d_edges {
             let _edge = self.get_edge(edge.0).unwrap();
             if _edge.1 <= 3 {
@@ -78,7 +80,7 @@ impl DaisySolver {
                         self.cube = _cube;
                     }
                 }
-            } else if _edge.1 >=4 && _edge.1 < 8 {
+            } else if _edge.1 >= 4 && _edge.1 < 8 {
                 if _edge.2 == 0 {
                     let _edge = self.get_edge(edge.0).unwrap();
                     let step = self.get_move(self.get_edge(edge.0).unwrap()).unwrap();
@@ -133,7 +135,6 @@ impl DaisySolver {
                         self.cube = _cube;
                     }
                 }
-                
             } else {
                 let _edge = self.get_edge(edge.0).unwrap();
                 let step = self.get_move(self.get_edge(edge.0).unwrap()).unwrap();
@@ -159,7 +160,7 @@ impl DaisySolver {
     pub fn is_solved(&self) -> bool {
         for edge in [DR, DF, DL, DB] {
             if !self.cube.ep[0..4].contains(&edge) {
-                return false
+                return false;
             }
         }
         for i in 0..4 {
@@ -170,7 +171,7 @@ impl DaisySolver {
         true
     }
 
-    fn get_edge(&self, edge: Edge) -> Result<(Edge, u8, u8), Error>{
+    fn get_edge(&self, edge: Edge) -> Result<(Edge, u8, u8), Error> {
         for i in 0..12 {
             if self.cube.ep[i] == edge {
                 return Ok((edge, i as u8, self.cube.eo[i]));
@@ -185,7 +186,7 @@ impl DaisySolver {
         if self.cube.eo[ei] == 1 {
             return true;
         } else if [DR, DF, DL, DB].contains(&self.cube.ep[ei]) {
-            return false
+            return false;
         }
         true
     }
@@ -212,31 +213,28 @@ impl DaisySolver {
             },
             DL => match edge.2 {
                 0 => Ok(L2),
-                _ => Err(Error::InvalidEdge)
-            }
+                _ => Err(Error::InvalidEdge),
+            },
             DR => match edge.2 {
                 0 => Ok(R2),
-                _ => Err(Error::InvalidEdge)
-            }
+                _ => Err(Error::InvalidEdge),
+            },
             DB => match edge.2 {
                 0 => Ok(B2),
-                _ => Err(Error::InvalidEdge)
-            }
+                _ => Err(Error::InvalidEdge),
+            },
             DF => match edge.2 {
                 0 => Ok(F2),
-                _ => Err(Error::InvalidEdge)
-            }
-            _ => Err(Error::InvalidEdge)
+                _ => Err(Error::InvalidEdge),
+            },
+            _ => Err(Error::InvalidEdge),
         }
     }
 }
 
-
 #[cfg(test)]
 mod test {
-    use crate::{
-        cubie::CubieCube, scramble, solver::lbl::daisy::DaisySolver,
-    };
+    use crate::{cubie::CubieCube, scramble, solver::lbl::daisy::DaisySolver};
 
     #[test]
     fn test_daisy() {
@@ -244,7 +242,7 @@ mod test {
         let moves = scramble();
         let cc = cc.apply_moves(&moves);
         let cc2 = cc.clone();
-        let mut daisy = DaisySolver{cube: cc};
+        let mut daisy = DaisySolver { cube: cc };
         let _cs = daisy.solve();
         assert!(daisy.is_solved());
         let cc2 = cc2.apply_moves(&_cs);

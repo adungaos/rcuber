@@ -4,4 +4,6 @@ pub mod cfop;
 pub mod lbl;
 /// Module for Roux method.
 pub mod roux;
+
 pub use cfop::CFOPSolver;
+pub use lbl::LBLSolver;

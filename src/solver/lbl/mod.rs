@@ -18,6 +18,7 @@ pub mod epll;
 
 
 use crate::facelet::Color;
+use crate::moves::optimise_moves;
 use crate::{cubie::CubieCube, moves::Move};
 
 pub use daisy::DaisySolver;
@@ -55,10 +56,41 @@ impl LBLSolver {
     pub fn solve(&mut self) -> Vec<Move> {
         let mut solution = Vec::new();
         let mut cross = CrossSolver::new(self.cube, true);
-        let mut cs = cross.solve();
-        solution.append(&mut cs);
-
-        solution
+        let mut _cs = cross.solve();
+        assert!(cross.is_solved());
+        self.cube = cross.cube;
+        solution.append(&mut _cs);
+        let mut bottom = BottomCornerSolver { cube: self.cube };
+        let mut _bs = bottom.solve();
+        assert!(bottom.is_solved());
+        self.cube = bottom.cube;
+        solution.append(&mut _bs);
+        let mut middle = MiddleEdgeSolver { cube: self.cube };
+        let mut _ms = middle.solve();
+        assert!(middle.is_solved());
+        self.cube = middle.cube;
+        solution.append(&mut _ms);
+        let mut eoll = EOLLSolver { cube: self.cube };
+        let mut _eos = eoll.solve();
+        assert!(eoll.is_solved());
+        self.cube = eoll.cube;
+        solution.append(&mut _eos);
+        let mut coll = COLLSolver { cube: self.cube };
+        let mut _cos = coll.solve();
+        assert!(coll.is_solved());
+        self.cube = coll.cube;
+        solution.append(&mut _cos);
+        let mut cpll = CPLLSolver { cube: self.cube };
+        let mut _cps = cpll.solve();
+        assert!(cpll.is_solved());
+        self.cube = cpll.cube;
+        solution.append(&mut _cps);
+        let mut epll = EPLLSolver { cube: self.cube };
+        let mut _eps = epll.solve();
+        assert!(epll.is_solved());
+        self.cube = epll.cube;
+        solution.append(&mut _eps);
+        optimise_moves(&solution)
     }
 
     pub fn is_solved(&self) -> bool {

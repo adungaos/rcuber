@@ -6,10 +6,10 @@ use crate::{
         Edge::{self, *},
     },
     moves::Move::{self, *},
-    solver::lbl::{get_put_move, DaisySolver},
+    solver::lbl::{daisy::DaisySolver, get_put_move},
 };
 
-/// DaisySolver for LBL(Layer by Layer) method.
+/// CrossSolver for LBL(Layer by Layer) method, i.e, solve bottom cross(four edges: DR, DF, DL, DB).
 /// # Example
 /// ```rust
 /// use rcuber::cubie::CubieCube;
@@ -86,9 +86,7 @@ impl CrossSolver {
 
 #[cfg(test)]
 mod test {
-    use crate::{
-        cubie::CubieCube, scramble, solver::lbl::cross::CrossSolver,
-    };
+    use crate::{cubie::CubieCube, scramble, solver::lbl::cross::CrossSolver};
 
     #[test]
     fn test_cross() {

@@ -15,6 +15,7 @@ use rcuber::solver::lbl::EPLLSolver;
 use rcuber::{cubie::CubieCube, solver::lbl::MiddleEdgeSolver};
 
 use rcuber::solver::lbl::{bottom::BottomCornerSolver, CrossSolver};
+use rcuber::solver::lbl::LBLSolver;
 
 fn main() {
     let cc = CubieCube::default();
@@ -23,31 +24,12 @@ fn main() {
     let cc = cc.apply_moves(&moves);
     let fc = FaceCube::try_from(&cc).unwrap();
     let _r = print_facelet(&fc);
-    let mut cross = CrossSolver::new(cc, true);
-    let _cs = cross.solve();
-    let mut bottom = BottomCornerSolver { cube: cross.cube };
-    let _bs = bottom.solve();
-    let _bs = optimise_moves(&_bs);
-    let mut middle = MiddleEdgeSolver { cube: bottom.cube };
-    let _ms = middle.solve();
-    let _ms = optimise_moves(&_ms);
-    let mut eoll = EOLLSolver { cube: middle.cube };
-    let _eos = eoll.solve();
-    assert!(eoll.is_solved());
-    let mut coll = COLLSolver { cube: eoll.cube };
-    let _cos = coll.solve();
-    assert!(coll.is_solved());
-    let mut cpll = CPLLSolver { cube: coll.cube };
-    let _cps = cpll.solve();
-    assert!(cpll.is_solved());
-    let mut epll = EPLLSolver { cube: cpll.cube };
-    let _eps = epll.solve();
-    assert!(epll.is_solved());
-    println!("Solution: {:?}, {:?}, {:?}, {:?}, {:?}, {:?}, {:?}",
-        _cs, _bs, _ms, _eos, _cos, _cps, _eps
-    );
-    let fc = FaceCube::try_from(&epll.cube).unwrap();
+    let mut solver = LBLSolver{cube: cc};
+    let solution = solver.solve();
+    assert!(solver.is_solved());
+    let fc = FaceCube::try_from(&solver.cube).unwrap();
     let _r = print_facelet(&fc);
+    println!("Solution: {:?}", solution);
     // for i in 0..10000 {
     //     let start = Instant::now();
     //     let cc = CubieCube::default();
