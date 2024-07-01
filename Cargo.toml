@@ -12,6 +12,9 @@ categories = ["algorithms"]
 license = "MIT"
 readme = "./README.md"
 
+[profile.dev]
+opt-level = 1
+
 [dependencies]
 rand = "0.8.5"
 thiserror = "1.0.61"

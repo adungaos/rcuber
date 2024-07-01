@@ -305,4 +305,13 @@ mod tests {
 
         assert_eq!(face_cube, expected);
     }
+
+    #[test]
+    fn test_min2phase() {
+        // let fc = "DUUBULDBFRBFRRULLLBRDFFFBLURDBFDFDRFRULBLUFDURRBLBDUDL";
+        let fc = FaceCube::try_from("FFFFUFFFFUUUURUUUURRRRFRRRRBBBBDBBBBDDDDLDDDDLLLLBLLLL").unwrap();
+        let cc = CubieCube::try_from(&fc).unwrap();
+        println!("{:?}", &cc);
+
+    }
 }
