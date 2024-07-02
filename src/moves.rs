@@ -20,7 +20,6 @@ use crate::facelet::Color;
 #[allow(non_camel_case_types)]
 #[derive(Debug, PartialEq, Clone, Copy, Eq, Hash, PartialOrd, Ord)]
 pub enum Move {
-    N,
     U, U2, U3,
     R, R2, R3,
     F, F2, F3,
@@ -39,6 +38,7 @@ pub enum Move {
     x, x2, x3,
     y, y2, y3,
     z, z2, z3,
+    N,
 }
 
 impl fmt::Display for Move {
