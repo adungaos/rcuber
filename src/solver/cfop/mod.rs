@@ -24,13 +24,13 @@ pub mod pll;
 /// # Example
 /// ```rust
 /// use rcuber::cubie::CubieCube;
-/// use rcuber::scramble;
+/// use rcuber::moves::Formula;
 /// use rcuber::solver::cfop::CFOPSolver;
 ///
 /// fn main() {
 ///     let cc = CubieCube::default();
-///     let moves = scramble();
-///     let cc = cc.apply_moves(&moves);
+///     let moves = Formula::scramble();
+///     let cc = cc.apply_formula(&moves);
 ///     let mut solver = CFOPSolver{cube: cc};
 ///     assert!(!solver.is_solved());
 ///     let solution = solver.solve();
@@ -202,13 +202,13 @@ pub fn corner_to_pos(corner: (Corner, u8, u8)) -> HashMap<Color, Color> {
 
 #[cfg(test)]
 mod tests {
-    use crate::{cubie::CubieCube, scramble, solver::CFOPSolver};
+    use crate::{cubie::CubieCube, moves::Formula, solver::CFOPSolver};
 
     #[test]
     fn test_cfop() {
         let cc = CubieCube::default();
-        let moves = scramble();
-        let cc = cc.apply_moves(&moves);
+        let moves = Formula::scramble();
+        let cc = cc.apply_formula(&moves);
         let cc2 = cc.clone();
         let mut solver = CFOPSolver { cube: cc };
         let solution = solver.solve();

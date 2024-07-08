@@ -1,10 +1,12 @@
 use std::cmp::min;
 
-use crate::cubie::CubieCube;
-use crate::facelet::FaceCube;
 use super::tables::{SymTables, IT, MT, S2RT, ST};
 use super::utils::UT;
+use crate::cubie::CubieCube;
+use crate::error::Error;
+use crate::facelet::FaceCube;
 
+/// Represent a cube by 4 index: corner permutation, edge permutaion, twist, flip.
 pub struct PermOriCube {
     pub perm_corner: u32,
     pub perm_edge: u32,
@@ -12,26 +14,7 @@ pub struct PermOriCube {
     pub flip: u16,
 }
 
-/**
- * Cubiecube's solvability state.
- * Solvable: Cube is solvable
- * MissingEdge: Not all 12 edges exist exactly once
- * Flip error: One edge has to be flipped
- * MissingCorner: Not all corners exist exactly once
- * TwistError: One corner has to be twisted
- * ParityError: Two corners or two edges have to be exchanged
- */
-#[derive(Debug, PartialEq, Eq)]
-pub enum CubeState {
-    Solvable,
-    MissingEdge,
-    FlipError,
-    MissingCorner,
-    TwistError,
-    ParityError,
-}
-
-/// Cube on the cubie level.
+/// Cube on the cubie level by corner and edge array.
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub struct ArrayCube {
     /// Corner Array, relative to SOLVED_STATE. ca = cp + co * 8
@@ -40,7 +23,7 @@ pub struct ArrayCube {
     pub ea: [u8; 12],
 }
 
-/// Solved cube on the Cubie level.
+/// Solved cube on the cubie level.
 pub const SOLVED_ARRAY_CUBE: ArrayCube = ArrayCube {
     ca: [0, 1, 2, 3, 4, 5, 6, 7],
     ea: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
@@ -52,6 +35,7 @@ impl Default for ArrayCube {
     }
 }
 
+/// Build an ArrayCube from CubieCube.
 impl From<&CubieCube> for ArrayCube {
     fn from(cc: &CubieCube) -> Self {
         let mut ca = [0; 8];
@@ -66,6 +50,7 @@ impl From<&CubieCube> for ArrayCube {
     }
 }
 
+/// Build an ArrayCube from PermOriCube.
 impl From<PermOriCube> for ArrayCube {
     fn from(po: PermOriCube) -> Self {
         let mut cc = ArrayCube::default();
@@ -77,6 +62,7 @@ impl From<PermOriCube> for ArrayCube {
     }
 }
 
+/// Build an ArrayCube from a facelet &str.
 impl From<&str> for ArrayCube {
     fn from(fc: &str) -> Self {
         let fc = FaceCube::try_from(fc).unwrap();
@@ -86,19 +72,19 @@ impl From<&str> for ArrayCube {
 }
 
 impl ArrayCube {
-    pub fn set_val_corner(val0: u8, val: u8) -> u8 {
+    fn set_val_corner(val0: u8, val: u8) -> u8 {
         val | val0 & !7
     }
 
-    pub fn set_val_edge(val0: u8, val: u8) -> u8 {
+    fn set_val_edge(val0: u8, val: u8) -> u8 {
         val | val0 & !0xf
     }
 
-    pub fn get_val_corner(val0: u8) -> u8 {
+    fn get_val_corner(val0: u8) -> u8 {
         val0 & 7
     }
 
-    pub fn get_val_edge(val0: u8) -> u8 {
+    fn get_val_edge(val0: u8) -> u8 {
         val0 & 0xf
     }
 
@@ -157,6 +143,7 @@ impl ArrayCube {
         prod
     }
 
+    /// prod = self * rhs, Corner and Edge. With mirrored cases considered.
     pub fn multiply(&self, rhs: &ArrayCube) -> Self {
         let mut prod = self.clone();
         prod.ca = prod.corner_multiply(rhs).ca;
@@ -164,6 +151,7 @@ impl ArrayCube {
         prod
     }
 
+    /// prod = self * rhs, Corner and Edge.
     pub fn multiply_full(&self, rhs: &ArrayCube) -> Self {
         let mut prod = self.clone();
         prod.ca = prod.corner_multiply_full(rhs).ca;
@@ -171,6 +159,7 @@ impl ArrayCube {
         prod
     }
 
+    /// Apply single move step using move table state.
     pub fn apply_move(&self, m: u8) -> Self {
         self.multiply(&MT.move_cube[m as usize])
     }
@@ -481,16 +470,9 @@ impl ArrayCube {
         }
     }
 
-    /**
-     * Check a cubiecube for solvability. Return the error code.
-     * 0: Cube is solvable
-     * -2: Not all 12 edges exist exactly once
-     * -3: Flip error: One edge has to be flipped
-     * -4: Not all corners exist exactly once
-     * -5: Twist error: One corner has to be twisted
-     * -6: Parity error: Two corners or two edges have to be exchanged
-     */
-    pub fn verify(&self) -> CubeState {
+    
+    /// Check a cubiecube for solvability. Return the error code.
+    pub fn verify(&self) -> Result<bool, Error> {
         let mut sum = 0;
         let mut edge_mask = 0;
         for e in 0..12 {
@@ -498,10 +480,10 @@ impl ArrayCube {
             sum ^= self.ea[e] & 0x10;
         }
         if edge_mask != 0xfff {
-            return CubeState::MissingEdge; // missing edges
+            return Err(Error::InvalidEdge); // missing edges
         }
         if sum != 0 {
-            return CubeState::FlipError;
+            return Err(Error::FlipError);
         }
         let mut corn_mask = 0;
         sum = 0;
@@ -510,18 +492,18 @@ impl ArrayCube {
             sum += self.ca[c] >> 3;
         }
         if corn_mask != 0xff {
-            return CubeState::MissingCorner; // missing corners
+            return Err(Error::InvalidCorner); // missing corners
         }
         if sum % 3 != 0 {
-            return CubeState::TwistError; // twisted corner
+            return Err(Error::TwistError); // twisted corner
         }
         if (self.get_nparity(self.get_perm_edge(), 12)
             ^ self.get_nparity(self.get_perm_corner(), 8))
             != 0
         {
-            return CubeState::ParityError; // parity error
+            return Err(Error::ParityError); // parity error
         }
-        return CubeState::Solvable; // cube ok
+        Ok(true) // cube ok
     }
 
     pub fn get_nparity(&self, idx: usize, n: usize) -> usize {
@@ -565,10 +547,10 @@ impl ArrayCube {
 
 #[cfg(test)]
 mod tests {
+    use super::super::tables::MT;
     use super::{ArrayCube, PermOriCube};
     use crate::cubie::CubieCube;
     use crate::facelet::FaceCube;
-    use super::super::tables::MT;
     use std::time::Instant;
     #[test]
     fn test_sym() {

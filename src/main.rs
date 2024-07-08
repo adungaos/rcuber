@@ -1,19 +1,22 @@
 use rcuber::facelet::FaceCube;
+use rcuber::generator::Generator;
 #[allow(unused_imports)]
 use rcuber::moves::Move::*;
 #[cfg(feature = "term")]
 use rcuber::printer::print_facelet;
-use rcuber::scramble;
-use rcuber::solver::cfop::CFOPSolver;
+use rcuber::moves::Formula;
 use rcuber::cubie::CubieCube;
+use rcuber::solver::cfop::CFOPSolver;
 use rcuber::solver::lbl::LBLSolver;
+use rcuber::solver::Min2PhaseSolver;
 
 fn main() {
     let cc = CubieCube::default();
-    let moves = scramble();
+    let moves =Formula::scramble();
     println!("Scramble: {:?}", moves);
-    let cc = cc.apply_moves(&moves);
+    let cc = cc.apply_formula(&moves);
     let cc2 = cc.clone();
+    let cc3 = cc.clone();
     let fc = FaceCube::try_from(&cc).unwrap();
     let _r = print_facelet(&fc);
     let mut lbl = LBLSolver{cube: cc};
@@ -25,4 +28,10 @@ fn main() {
     let mut cfop = CFOPSolver{cube: cc2};
     let cfops = cfop.solve();
     println!("CFOP Solution: {:?}, Len: {}", cfops, cfops.len());
+    let mut m2p = Min2PhaseSolver{cube: cc3};
+    let m2ps = m2p.solve();
+    println!("Min2Phase Solution: {:?}, Len: {}", m2ps, m2ps.moves.len());
+    let rc = Generator::roux_lb_solved();
+    let fc = FaceCube::try_from(&rc).unwrap();
+    let _r = print_facelet(&fc);
 }

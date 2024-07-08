@@ -4,6 +4,7 @@ use super::coord::CoordCube;
 use super::utils::UT;
 use static_init::dynamic;
 
+/// Move data tables.
 #[derive(Debug)]
 pub struct MoveTables {
     pub move_cube: [ArrayCube; 18],
@@ -147,6 +148,7 @@ impl MoveTables {
     }
 }
 
+/// Symmetries data tables.
 #[derive(Debug)]
 pub struct SymTables {
     pub move_cube_sym: [u64; 18],
@@ -210,6 +212,7 @@ impl SymTables {
     }
 }
 
+/// Symmetry to Raw data tables.
 #[derive(Debug)]
 pub struct Sym2RawTables {
     pub flip_s2r: Vec<u16>,
@@ -339,6 +342,7 @@ impl Sym2RawTables {
     }
 }
 
+/// Inverse data tables.
 #[derive(Debug)]
 pub struct InvTables {
     pub perm2_comb_p: Vec<u8>,
@@ -373,6 +377,7 @@ impl InvTables {
     }
 }
 
+/// Coordnate data tables.
 #[allow(dead_code)]
 #[derive(Debug)]
 pub struct CoordTables {
@@ -523,6 +528,7 @@ impl CoordTables {
     }
 }
 
+/// Prunning data tables.
 #[derive(Debug)]
 pub struct PruningTables {
     // x_prun = Pruning Table

@@ -1,3 +1,5 @@
+use rand::random;
+use static_init::dynamic;
 use std::fmt;
 use std::ops::Mul;
 
@@ -329,6 +331,199 @@ impl CubieCube {
         moves.iter().fold(*self, |acc, &m| acc.apply_move(m))
     }
 
+    /// Applies the sequence of moves to the current state.
+    pub fn apply_formula(&self, formula: &Formula) -> Self {
+        formula
+            .moves
+            .iter()
+            .fold(*self, |acc, &m| acc.apply_move(m))
+    }
+
+    /// Multiply this cubie cube with another cubie cube b, restricted to the corners.
+    pub fn corner_multiply(&mut self, b: CubieCube) {
+        let mut c_perm = [URF; 8];
+        let mut c_ori = [0; 8];
+        let mut ori = 0;
+        for ci in ALL_CORNERS {
+            let c = ci as usize;
+            c_perm[c] = self.cp[b.cp[c] as usize];
+            let ori_a = self.co[b.cp[c] as usize];
+            let ori_b = b.co[c];
+            if ori_a < 3 && ori_b < 3 {
+                // two regular cubes
+                ori = ori_a + ori_b;
+                if ori >= 3 {
+                    ori -= 3;
+                }
+            } else if ori_a < 3 && 3 <= ori_b {
+                // cube b is in a mirrored state
+                ori = ori_a + ori_b;
+                if ori >= 6 {
+                    ori -= 3; // the composition also is in a mirrored state
+                }
+            } else if ori_a >= 3 && 3 > ori_b {
+                // cube a is in a mirrored state
+                ori = ori_a - ori_b;
+                if ori < 3 {
+                    ori += 3; // the composition is a mirrored cube
+                }
+            } else if ori_a >= 3 && ori_b >= 3 {
+                // if both cubes are in mirrored states
+                if ori_a >= ori_b {
+                    ori = ori_a - ori_b;
+                } else {
+                    ori = ori_b - ori_a;
+                    ori = 3 - ori; // the composition is a regular cube
+                }
+            }
+            c_ori[c] = ori;
+        }
+        for c in ALL_CORNERS {
+            let ci = c as usize;
+            self.cp[ci] = c_perm[ci];
+            self.co[ci] = c_ori[ci];
+        }
+    }
+
+    /// Multiply this cubie cube with another cubie cube b, restricted to the edges.
+    pub fn edge_multiply(&mut self, b: CubieCube) {
+        let mut e_perm: [Edge; 12] = [UR; 12];
+        let mut e_ori = [0; 12];
+        for ei in ALL_EDGES {
+            let e = ei as usize;
+            e_perm[e] = self.ep[b.ep[e] as usize];
+            e_ori[e] = (b.eo[e] + self.eo[b.ep[e] as usize]) % 2;
+        }
+        for ei in ALL_EDGES {
+            let e = ei as usize;
+            self.ep[e] = e_perm[e];
+            self.eo[e] = e_ori[e];
+        }
+    }
+
+    /// Multiply this cubie cube with another cubie cube b.
+    pub fn multiply(&mut self, b: CubieCube) {
+        self.corner_multiply(b);
+        self.edge_multiply(b);
+    }
+
+    /// Multiply this cubie cube with another cubie cube b.
+    pub fn multiply_moves(&mut self, moves: &Vec<Move>) {
+        moves
+            .iter()
+            .for_each(|&m| self.multiply(BSCT.bsc[m as usize]));
+    }
+
+    /// Set the twist of the 8 corners. 0 <= twist < 2187 in phase 1, twist = 0 in phase 2.
+    pub fn set_twist(&mut self, twist: u16) {
+        let mut twistparity = 0;
+        let mut twist = twist;
+        for i in ((URF as usize)..(DRB as usize)).rev() {
+            self.co[i] = (twist % 3) as u8;
+            twistparity += self.co[i];
+            twist /= 3;
+        }
+        self.co[DRB as usize] = (3 - twistparity % 3) % 3;
+    }
+
+    /// Set the flip of the 12 edges. 0 <= flip < 2048 in phase 1, flip = 0 in phase 2.
+    pub fn set_flip(&mut self, flip: u16) {
+        let mut flipparity = 0;
+        let mut flip = flip;
+        for i in ((UR as usize)..(BR as usize)).rev() {
+            self.eo[i] = (flip % 2) as u8;
+            flipparity += self.eo[i];
+            flip /= 2;
+        }
+        self.eo[BR as usize] = (2 - flipparity % 2) % 2;
+    }
+
+    /// Get the location of the UD-slice edges FR,FL,BL and BR ignoring their permutation.
+    ///
+    /// 0<= slice < 495 in phase 1, slice = 0 in phase 2.
+    pub fn get_slice(&self) -> u16 {
+        let mut a = 0;
+        let mut _x = 0;
+        // Compute the index a < (12 choose 4)
+        for j in ((UR as usize)..=(BR as usize)).rev() {
+            if FR <= self.ep[j] && self.ep[j] <= BR {
+                a += c_nk((11 - j) as u32, _x + 1);
+                _x += 1;
+            }
+        }
+        a as u16
+    }
+
+    /// Set the location of the UD-slice edges FR,FL,BL and BR ignoring their permutation.
+    ///
+    /// 0<= slice < 495 in phase 1, slice = 0 in phase 2.
+    pub fn set_slice(&mut self, idx: u16) {
+        let slice_edge = [FR, FL, BL, BR];
+        let other_edge = [UR, UF, UL, UB, DR, DF, DL, DB];
+        let mut a = idx; // Location
+        let mut ep = [-1; 12];
+
+        let mut _x: i32 = 4; // set slice edges
+        for j in ALL_EDGES {
+            if a >= c_nk((11 - j as u32) as u32, _x as u32) as u16 {
+                self.ep[j as usize] = slice_edge[(4 - _x) as usize];
+                ep[j as usize] = slice_edge[(4 - _x) as usize] as i32;
+                a -= c_nk(11 - j as u32, _x as u32) as u16;
+                _x -= 1;
+            }
+        }
+        let mut _x = 0; // set the remaining edges UR..DB
+        for j in ALL_EDGES {
+            if ep[j as usize] == -1 {
+                self.ep[j as usize] = other_edge[_x];
+                _x += 1;
+            }
+        }
+    }
+
+    /// Set the permutation of the 8 corners.
+    ///
+    /// 0 <= corners < 40320 defined but unused in phase 1, 0 <= corners < 40320 in phase 2,
+    ///
+    /// corners = 0 for solved cube
+    pub fn set_corners(&mut self, idx: u16) {
+        self.cp = ALL_CORNERS.clone();
+        let mut idx = idx;
+        for j in ALL_CORNERS {
+            let mut k = idx % (j as u16 + 1);
+            idx /= j as u16 + 1;
+            while k > 0 {
+                rotate_right(&mut self.cp, 0, j as usize);
+                k -= 1;
+            }
+        }
+    }
+
+    /// Generate a random cube. The probability is the same for all possible states.
+    pub fn randomize(&mut self) {
+        // The permutation of the 12 edges. 0 <= idx < 12!."""
+        let mut idx = random::<usize>() % 479001600; // 12!
+        self.cp = ALL_CORNERS.clone();
+        for j in ALL_EDGES {
+            let mut k = idx % (j as usize + 1);
+            idx /= j as usize + 1;
+            while k > 0 {
+                rotate_right(&mut self.ep, 0, j as usize);
+                k -= 1;
+            }
+        }
+        let p = self.edge_parity();
+        loop {
+            self.set_corners(random::<u16>() % 40320); // 8!
+            if p == self.corner_parity() {
+                // parities of edge and corner permutations must be the same
+                break;
+            }
+        }
+        self.set_flip(random::<u16>() % 2048); // 2^11
+        self.set_twist(random::<u16>() % 2187); // 3^7
+    }
+
     /// Returns the number of corner twist needed to orient the corners.
     pub fn count_corner_twist(&self) -> u8 {
         self.co.iter().fold(0, |acc, co| acc + ((3 - co) % 3))
@@ -383,52 +578,6 @@ impl CubieCube {
         let has_valid_twist = c_twist % 3 == 0 && e_twist % 2 == 0;
 
         has_even_permutation && has_valid_twist
-    }
-
-    /// Multiply this cubie cube with another cubie cube b, restricted to the corners.
-    pub fn corner_multiply(&mut self, b: CubieCube) {
-        let mut c_perm = [URF; 8];
-        let mut c_ori = [0; 8];
-        let mut ori = 0;
-        for ci in ALL_CORNERS {
-            let c = ci as usize;
-            c_perm[c] = self.cp[b.cp[c] as usize];
-            let ori_a = self.co[b.cp[c] as usize];
-            let ori_b = b.co[c];
-            if ori_a < 3 && ori_b < 3 {
-                // two regular cubes
-                ori = ori_a + ori_b;
-                if ori >= 3 {
-                    ori -= 3;
-                }
-            } else if ori_a < 3 && 3 <= ori_b {
-                // cube b is in a mirrored state
-                ori = ori_a + ori_b;
-                if ori >= 6 {
-                    ori -= 3; // the composition also is in a mirrored state
-                }
-            } else if ori_a >= 3 && 3 > ori_b {
-                // cube a is in a mirrored state
-                ori = ori_a - ori_b;
-                if ori < 3 {
-                    ori += 3; // the composition is a mirrored cube
-                }
-            } else if ori_a >= 3 && ori_b >= 3 {
-                // if both cubes are in mirrored states
-                if ori_a >= ori_b {
-                    ori = ori_a - ori_b;
-                } else {
-                    ori = ori_b - ori_a;
-                    ori = 3 - ori; // the composition is a regular cube
-                }
-            }
-            c_ori[c] = ori;
-        }
-        for c in ALL_CORNERS {
-            let ci = c as usize;
-            self.cp[ci] = c_perm[ci];
-            self.co[ci] = c_ori[ci];
-        }
     }
 
     /// Return the inverse of this cubiecube.
@@ -542,6 +691,63 @@ impl CubieCube {
         }
         result
     }
+}
+
+struct BasicMoveCubeTables {
+    bsc: [CubieCube; 18],
+}
+impl BasicMoveCubeTables {
+    pub fn new() -> Self {
+        let mut bsc = [CubieCube::default(); 18];
+        for i in 0..18 {
+            bsc[i] = bsc[i].apply_move(ALL_MOVES[i]);
+        }
+        Self { bsc }
+    }
+}
+
+/// 18 basic move cube tables.
+/// [U, U2, U3, R, R2, R3, F, F2, F3, D, D2, D3, L, L2, L3, B, B2, B3]
+#[dynamic]
+static BSCT: BasicMoveCubeTables = BasicMoveCubeTables::new();
+
+/// Rotate array arr right between left and right. right is included.
+pub fn rotate_right<T: Copy>(arr: &mut [T], left: usize, right: usize) {
+    let temp = arr[right];
+    for i in (left + 1..=right).rev() {
+        arr[i] = arr[i - 1];
+    }
+    arr[left] = temp;
+}
+
+/// Rotate array arr left between left and right. right is included.
+pub fn rotate_left<T: Copy>(arr: &mut [T], left: usize, right: usize) {
+    let temp = arr[left];
+    for i in left..right {
+        arr[i] = arr[i + 1];
+    }
+    arr[right] = temp;
+}
+
+/// Binomial coefficient [n choose k].
+pub fn c_nk(n: u32, k: u32) -> u32 {
+    let mut k = k;
+    if n < k {
+        return 0;
+    }
+    if k > (n / 2) {
+        k = n - k;
+    }
+    let mut s = 1;
+    let mut i = n;
+    let mut j = 1;
+    while i != n - k {
+        s *= i;
+        s /= j;
+        i -= 1;
+        j += 1;
+    }
+    s
 }
 
 #[cfg(test)]

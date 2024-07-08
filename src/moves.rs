@@ -1,5 +1,8 @@
+use std::fmt::Display;
 use std::ops::{Add, Mul};
 use std::{fmt, str::FromStr};
+
+use rand::random;
 
 use self::Move::*;
 use crate::cubie::{Corner::*, CubieCube, Edge::*};
@@ -395,39 +398,95 @@ pub const S_MOVE: CubieCube = CubieCube {
     eo: [1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0],
 };
 
-pub fn inverse_moves(moves: &Vec<Move>) -> Vec<Move> {
-    let mut rev = Vec::new();
-    for m in moves {
-        rev.push(m.get_inverse());
-    }
-    rev.reverse();
-    rev
+#[derive(Debug)]
+pub struct Formula {
+    pub moves: Vec<Move>,
 }
 
-pub fn optimise_moves(moves: &Vec<Move>) -> Vec<Move> {
-    let mut result = Vec::new();
-    for m in moves {
-        let p = *result.last().unwrap_or(&N);
-        if *m == N {
-            continue;
-        }
-        if m.get_face() == p.get_face() {
-            let _m = *m + p;
-            result.pop();
-            if _m == N {
+impl Default for Formula {
+    fn default() -> Self {
+        Self { moves: Vec::new() }
+    }
+}
+
+impl Display for Formula {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{:?}", self.moves)
+    }
+}
+
+impl Formula {
+    pub fn from_string(s: &str) -> Self {
+        let moves: Vec<Move> = s
+            .split_ascii_whitespace()
+            .map(|m| Move::from_str(m).unwrap())
+            .collect();
+        Self { moves }
+    }
+    /// Generate a random scramble formula.
+    pub fn scramble() -> Self {
+        let mut moves = Vec::new();
+        let mut p = B;
+        for _ in 0..25 {
+            let m = match random::<u32>() % 6 {
+                0 => U,
+                1 => R,
+                2 => F,
+                3 => D,
+                4 => L,
+                _ => B,
+            };
+            if m == p {
                 continue;
             }
-            result.push(_m);
-        } else {
-            result.push(*m);
+            let s = match random::<u32>() % 3 {
+                0 => "",
+                1 => "2",
+                _ => "'",
+            };
+            let mv = format!("{:?}{}", m, s);
+            let mv = Move::from_str(mv.as_str()).unwrap();
+            moves.push(mv);
+            p = m;
         }
+        Self { moves }
     }
-    result
+
+    pub fn optimise(&self) -> Self {
+        let mut moves = Vec::new();
+        for m in self.moves.clone() {
+            let p = *moves.last().unwrap_or(&N);
+            if m == N {
+                continue;
+            }
+            if m.get_face() == p.get_face() {
+                let _m = m + p;
+                moves.pop();
+                if _m == N {
+                    continue;
+                }
+                moves.push(_m);
+            } else {
+                moves.push(m);
+            }
+        }
+        Self { moves }
+    }
+
+    pub fn inverse(&self) -> Self {
+        let mut moves = Vec::new();
+        for m in self.moves.clone() {
+            moves.push(m.get_inverse());
+        }
+        moves.reverse();
+        Self { moves }
+    }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{optimise_moves, Move::*};
+    use super::Formula;
+    use super::Move::*;
 
     #[test]
     fn test_move_add_mul() {
@@ -453,8 +512,16 @@ mod tests {
 
     #[test]
     fn test_optimise() {
-        let moves = vec![N, R, R, U, R3, U3, R, R, U, U, R3, N, L, L3];
-        let moves = optimise_moves(&moves);
+        let f = Formula {
+            moves: vec![N, R, R, U, R3, U3, R, R, U, U, R3, N, L, L3],
+        };
+        let moves = f.optimise();
         println!("{:?}", moves);
+    }
+
+    #[test]
+    fn test_scramble() {
+        let r = Formula::scramble();
+        println!("{:?}", r);
     }
 }

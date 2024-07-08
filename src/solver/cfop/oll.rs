@@ -6,16 +6,16 @@ use crate::moves::Move::{self, *};
 /// # Example
 /// ```rust
 /// use rcuber::cubie::CubieCube;
-/// use rcuber::scramble;
+/// use rcuber::moves::Formula;
 /// use rcuber::solver::cfop::cross::CrossSolver;
 /// use rcuber::solver::cfop::f2l::F2LSolver;
 /// use rcuber::solver::cfop::oll::OLLSolver;
 ///
 /// fn main() {
 ///     let cc = CubieCube::default();
-///     let moves = scramble();
+///     let moves =Formula::scramble();
 ///     println!("Scramble: {:?}", moves);
-///     let cc = cc.apply_moves(&moves);
+///     let cc = cc.apply_formula(&moves);
 ///     let mut cross = CrossSolver{cube: cc};
 ///     assert!(!cross.is_solved());
 ///     let solution = cross.solve();

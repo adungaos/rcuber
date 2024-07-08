@@ -1,12 +1,14 @@
 use std::fmt::Display;
 
 use super::{
-    constants::{ALL_MOVES, APPEND_LENGTH, INVERSE_SOLUTION, USE_SEPARATOR},
+    constants::{APPEND_LENGTH, INVERSE_SOLUTION, USE_SEPARATOR},
     tables::MT,
 };
+use crate::constants::ALL_MOVES;
 use crate::moves::Move::{self, *};
 use static_init::dynamic;
 
+/// Solution
 #[derive(Debug)]
 pub struct Solution {
     pub length: usize,
@@ -18,6 +20,7 @@ pub struct Solution {
 
 impl Display for Solution {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        // let res = self.to_vec();
         let mut res = String::new();
         let urf = match (self.verbose & INVERSE_SOLUTION) != 0 {
             true => (self.urf_idx + 3) % 6,
@@ -70,6 +73,24 @@ impl Solution {
         }
     }
 
+    pub fn to_vec(&self) -> Vec<Move> {
+        let mut res = Vec::new();
+        let urf = match (self.verbose & INVERSE_SOLUTION) != 0 {
+            true => (self.urf_idx + 3) % 6,
+            false => self.urf_idx,
+        };
+        if urf < 3 {
+            for s in 0..self.length {
+                res.push(ALL_MOVES[MT.urf_move[urf][self.moves[s] as usize] as usize]);
+            }
+        } else {
+            for s in (0..self.length).rev() {
+                res.push(ALL_MOVES[MT.urf_move[urf][self.moves[s] as usize] as usize]);
+            }
+        }
+        res
+    }
+
     pub fn set_args(&mut self, verbose: usize, urf_idx: usize, depth1: usize) {
         self.verbose = verbose;
         self.urf_idx = urf_idx;
@@ -111,6 +132,7 @@ impl Solution {
     }
 }
 
+/// Utils data tables.
 #[derive(Debug)]
 pub struct UtilTables {
     pub cnk: [[u16; 13]; 13],
@@ -169,7 +191,6 @@ pub static UT: UtilTables = UtilTables::new();
 
 #[cfg(test)]
 mod tests {
-
     use super::UtilTables;
 
     #[test]

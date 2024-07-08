@@ -9,15 +9,15 @@ use crate::{
 /// # Example
 /// ```rust
 /// use rcuber::cubie::CubieCube;
-/// use rcuber::scramble;
+/// use rcuber::moves::Formula;
 /// use rcuber::solver::lbl::cross::CrossSolver;
 /// use rcuber::solver::lbl::bottom::BottomCornerSolver;
 /// use rcuber::solver::lbl::middle::MiddleEdgeSolver;
 ///
 /// fn main() {
 ///     let cc = CubieCube::default();
-///     let moves = scramble();
-///     let cc = cc.apply_moves(&moves);
+///     let moves = Formula::scramble();
+///     let cc = cc.apply_formula(&moves);
 ///     let mut cross = CrossSolver::new(cc, true);
 ///     let _cs = cross.solve();
 ///     let mut bottom = BottomCornerSolver{cube: cross.cube};
@@ -150,25 +150,24 @@ pub fn get_edges_middle(cc: &CubieCube) -> Vec<(Edge, u8, u8)> {
 mod tests {
     use crate::{
         cubie::CubieCube,
-        moves::optimise_moves,
-        scramble,
+        moves::Formula,
         solver::lbl::{bottom::BottomCornerSolver, cross::CrossSolver, middle::MiddleEdgeSolver},
     };
 
     #[test]
     fn test_middle_layer() {
         let cc = CubieCube::default();
-        let moves = scramble();
-        let cc = cc.apply_moves(&moves);
+        let moves = Formula::scramble();
+        let cc = cc.apply_formula(&moves);
         let mut cross = CrossSolver::new(cc, true);
         let _cs = cross.solve();
         let mut bottom = BottomCornerSolver { cube: cross.cube };
         let _bs = bottom.solve();
-        let _bs = optimise_moves(&_bs);
+        // let _bs = optimise_moves(&_bs);
         let mut middle = MiddleEdgeSolver { cube: bottom.cube };
         let _ms = middle.solve();
         assert!(middle.is_solved());
-        let _ms = optimise_moves(&_ms);
+        // let _ms = optimise_moves(&_ms);
         println!(
             "Scramble: {:?}\nSolution: {:?}, {:?}, {:?}",
             moves, _cs, _bs, _ms

@@ -1,19 +1,45 @@
 use std::cmp::{max, min};
 
-use super::arraycube::CubeState;
 use super::constants::{
     MAX_DEPTH2, MAX_PRE_MOVES, MIN_P1LENGTH_PRE, N_COMB, N_MPERM, OPTIMAL_SOLUTION, TRY_INVERSE,
     TRY_THREE_AXES, USE_CONJ_PRUN,
 };
-use crate::error::Error;
+use super::cubie::CubieCube;
 use super::tables::{CT, IT, MT, PT, ST};
 use super::utils::UT;
 use super::{arraycube::ArrayCube, coord::CoordCube, utils::Solution};
+use crate::error::Error;
+use crate::facelet::FaceCube;
+use crate::moves::Formula;
 
-#[allow(dead_code)]
+/// min2phase Solver.
+/// # Example
+/// ```rust
+/// use rcuber::{facelet::FaceCube, generator::Generator};
+/// use rcuber::solver::min2phase::solver::Solver;
+///
+/// fn main() {
+///     let mut solver = Solver::default();
+///     let s = solver
+///         .solve(
+///             "DUUBULDBFRBFRRULLLBRDFFFBLURDBFDFDRFRULBLUFDURRBLBDUDL",
+///             21,
+///             100000,
+///             0,
+///             0x0,
+///         )
+///         .unwrap();
+///     println!("{}", s);
+///     let n = solver.next(500, 0, 0x4).unwrap();
+///     println!("{}", n);
+///     let n = solver.next(500, 0, 0x4).unwrap();
+///     println!("{}", n);
+///     let n = solver.next(1000, 0, 0x4).unwrap();
+///     println!("{}", n);
+/// }
+/// ```
 #[derive(Debug)]
 pub struct Solver {
-    inited: bool,
     moves: [i32; 31],
     node_ud: [CoordCube; 21],
     node_rl: [CoordCube; 21],
@@ -25,7 +51,7 @@ pub struct Solver {
     depth1: usize,
     max_dep2: usize,
     sol_len: usize,
-    solution: Solution,
+    pub solution: Solution,
     probe: u64,
     probe_max: u64,
     probe_min: u64,
@@ -55,7 +81,6 @@ impl Default for Solver {
 
         let pre_move_cubes = [ArrayCube::default(); MAX_PRE_MOVES + 1];
         Self {
-            inited: false,
             moves: [0; 31],
             node_ud,
             node_rl,
@@ -88,6 +113,41 @@ impl Default for Solver {
 }
 
 impl Solver {
+    /// Solve cube to an expected state(goal falcelet).
+    pub fn solve_to(
+        &mut self,
+        facelet: &str,
+        goal: &str,
+        max_depth: usize,
+        probe_max: u64,
+        probe_min: u64,
+        verbose: usize,
+    ) -> Result<Formula, Error> {
+        let fc0 = FaceCube::try_from(facelet)?;
+        let fcg = FaceCube::try_from(goal)?;
+        let cc0 = CubieCube::try_from(&fc0)?;
+        let s = cc0.verify()?;
+        if s != true {
+            return Err(Error::InvalidFaceletString); // no valid facelet cube, gives invalid cubie cube
+        }
+        let ccg = CubieCube::try_from(&fcg)?;
+        let s = ccg.verify()?;
+        if s != true {
+            return Err(Error::InvalidFaceletString); // no valid facelet cube, gives invalid cubie cube
+        }
+        // cc0 * S = ccg  <=> (ccg^-1 * cc0) * S = Id
+        let mut cc = ccg.inverse_cubie_cube();
+        cc.multiply(cc0);
+        self.solve(
+            FaceCube::try_from(&cc).unwrap().to_string().as_str(),
+            max_depth,
+            probe_max,
+            probe_min,
+            verbose,
+        )
+    }
+
+    /// Solve cube to solved state.
     pub fn solve(
         &mut self,
         facelet: &str,
@@ -95,9 +155,9 @@ impl Solver {
         probe_max: u64,
         probe_min: u64,
         verbose: usize,
-    ) -> Result<String, Error> {
+    ) -> Result<Formula, Error> {
         let cubestate = self.feed_with_verify(facelet);
-        if cubestate != CubeState::Solvable {
+        if cubestate.is_err() {
             return Err(Error::InvalidFaceletString);
         }
         self.sol_len = max_depth + 1;
@@ -115,7 +175,7 @@ impl Solver {
     }
 
     /// feed facelet to self.cc and verify if its a solvable cube.
-    pub fn feed_with_verify(&mut self, facelet: &str) -> CubeState {
+    pub fn feed_with_verify(&mut self, facelet: &str) -> Result<bool, Error> {
         self.cc = ArrayCube::from(facelet);
         self.cc.verify()
     }
@@ -157,12 +217,13 @@ impl Solver {
         }
     }
 
+    /// Continue search to find more optimal solution.
     pub fn next(
         &mut self,
         probe_max: u64,
         probe_min: u64,
         verbose: usize,
-    ) -> Result<String, Error> {
+    ) -> Result<Formula, Error> {
         self.probe = 0;
         self.probe_max = probe_max;
         self.probe_min = min(probe_min, probe_max);
@@ -175,7 +236,7 @@ impl Solver {
         }
     }
 
-    pub fn phase1_pre_moves(&mut self, max1: usize, lm: i32, ac: ArrayCube, ssym: u64) -> u32 {
+    fn phase1_pre_moves(&mut self, max1: usize, lm: i32, ac: ArrayCube, ssym: u64) -> u32 {
         self.pre_move_len = self.max_pre_moves - max1;
         if (self.is_rec && (self.depth1 == self.length1 - self.pre_move_len))
             || (!self.is_rec && (self.pre_move_len == 0 || (0x36FB7 >> lm & 1) == 0))
@@ -227,7 +288,7 @@ impl Solver {
         1
     }
 
-    pub fn search(&mut self) -> Result<String, Error> {
+    fn search(&mut self) -> Result<Formula, Error> {
         self.length1 = match self.is_rec {
             true => self.length1,
             false => 0,
@@ -252,7 +313,11 @@ impl Solver {
                 {
                     match self.solution.length {
                         0 => return Err(Error::ProbeLimitExceeded),
-                        _ => return Ok(self.solution.to_string()),
+                        _ => {
+                            return Ok(Formula {
+                                moves: self.solution.to_vec(),
+                            })
+                        }
                     }
                 }
                 self.urf_idx += 1;
@@ -261,11 +326,15 @@ impl Solver {
         }
         match self.solution.length {
             0 => return Err(Error::NoSolutionForMaxDepth),
-            _ => return Ok(self.solution.to_string()),
+            _ => {
+                return Ok(Formula {
+                    moves: self.solution.to_vec(),
+                })
+            }
         }
     }
 
-    pub fn search_opt(&mut self) -> Result<String, Error> {
+    fn search_opt(&mut self) -> Result<Formula, Error> {
         let mut maxprun1 = 0;
         let mut maxprun2 = 0;
         for i in 0..6 {
@@ -296,21 +365,25 @@ impl Solver {
             {
                 return match self.solution.length == 0 {
                     true => Err(Error::ProbeLimitExceeded),
-                    false => Ok(self.solution.to_string()),
+                    false => Ok(Formula {
+                        moves: self.solution.to_vec(),
+                    }),
                 };
             }
             self.length1 += 1;
         }
         match self.solution.length == 0 {
             true => Err(Error::NoSolutionForMaxDepth),
-            false => Ok(self.solution.to_string()),
+            false => Ok(Formula {
+                moves: self.solution.to_vec(),
+            }),
         }
     }
 
     ///     0: Found or Probe limit exceeded
     ///     1: at least 1 + maxDep2 moves away, Try next power
     ///     2: at least 2 + maxDep2 moves away, Try next axis
-    pub fn init_phase2_pre(&mut self) -> u32 {
+    fn init_phase2_pre(&mut self) -> u32 {
         self.is_rec = false;
         let _probe = match self.solution.length {
             0 => self.probe_max,
@@ -421,7 +494,7 @@ impl Solver {
         }
     }
 
-    pub fn init_phase2(
+    fn init_phase2(
         &mut self,
         p2corn: usize,
         p2csym: usize,
@@ -500,7 +573,7 @@ impl Solver {
     /// 0: Found or Probe limit exceeded
     /// 1: Try Next Power
     /// 2: Try Next Axis
-    pub fn phase1(&mut self, node: CoordCube, ssym: u64, maxl: usize, lm: i32) -> u32 {
+    fn phase1(&mut self, node: CoordCube, ssym: u64, maxl: usize, lm: i32) -> u32 {
         if node.prun == 0 && maxl < 5 {
             if self.allow_shorter || maxl == 0 {
                 self.depth1 -= maxl;
@@ -558,7 +631,7 @@ impl Solver {
         1
     }
 
-    pub fn phase1_opt(
+    fn phase1_opt(
         &mut self,
         ud: CoordCube,
         rl: CoordCube,
@@ -647,7 +720,7 @@ impl Solver {
 
     //-1: no solution found
     // X: solution with X moves shorter than expectation. Hence, the length of the solution is  depth - X
-    pub fn phase2(
+    fn phase2(
         &mut self,
         edge: u16,
         esym: u16,
@@ -743,6 +816,7 @@ impl Solver {
 #[cfg(test)]
 mod tests {
     use super::Solver;
+    use crate::{facelet::FaceCube, generator::Generator};
 
     #[test]
     fn test_solver() {
@@ -763,5 +837,22 @@ mod tests {
         println!("{}", n);
         let n = solver.next(1000, 0, 0x4).unwrap();
         println!("{}", n);
+    }
+
+    #[test]
+    fn test_solve_to() {
+        let gc = Generator::superflip();
+        let mut solver = Solver::default();
+        let s = solver
+            .solve_to(
+                "UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB",
+                FaceCube::try_from(&gc).unwrap().to_string().as_str(),
+                21,
+                100000,
+                10000,
+                0,
+            )
+            .unwrap();
+        println!("{}", s);
     }
 }

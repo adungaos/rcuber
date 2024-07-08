@@ -17,14 +17,14 @@ use super::{a_star_search, edge_to_pos};
 /// # Example
 /// ```rust
 /// use rcuber::cubie::CubieCube;
-/// use rcuber::scramble;
+/// use rcuber::moves::Formula;
 /// use rcuber::solver::cfop::cross::CrossSolver;
 ///
 /// fn main() {
 ///     let cc = CubieCube::default();
-///     let moves = scramble();
-///     println!("Scramble: {:?}", moves);
-///     let cc = cc.apply_moves(&moves);
+///     let formula = Formula::scramble();
+///     println!("Scramble: {:?}", formula);
+///     let cc = cc.apply_formula(&formula);
 ///     let mut cross = CrossSolver{cube: cc};
 ///     assert!(!cross.is_solved());
 ///     let solution = cross.solve();
@@ -282,7 +282,7 @@ impl CrossSolver {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{cubie::CubieCube, scramble};
+    use crate::{cubie::CubieCube, moves::Formula};
     #[test]
     fn test_cross_solver() {
         let cc = CubieCube::default();
@@ -314,15 +314,17 @@ mod tests {
         assert!(solved);
         // println!("{:?}", result);
         let cc = CubieCube::default();
-        let moves = scramble();
-        let cc = cc.apply_moves(&moves);
-        let mut cs = CrossSolver{cube: cc};
+        let formula = Formula::scramble();
+        let cc = cc.apply_formula(&formula);
+        let mut cs = CrossSolver { cube: cc };
         let solution = cs.solve();
         let cc = cc.apply_moves(&solution);
         let d_edges = cc.get_edges_d();
         let solved = CrossSolver::cross_goal((cc.center, d_edges.clone()));
         assert!(solved);
-        println!("Scramble: {:?}, Solution: {:?}, Solved: {:?}", &moves, &solution, solved);
-        
+        println!(
+            "Scramble: {:?}, Solution: {:?}, Solved: {:?}",
+            &formula, &solution, solved
+        );
     }
 }

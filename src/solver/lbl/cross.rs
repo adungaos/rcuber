@@ -13,13 +13,13 @@ use crate::{
 /// # Example
 /// ```rust
 /// use rcuber::cubie::CubieCube;
-/// use rcuber::scramble;
+/// use rcuber::moves::Formula;
 /// use rcuber::solver::lbl::cross::CrossSolver;
 ///
 /// fn main() {
 ///     let cc = CubieCube::default();
-///     let moves = scramble();
-///     let cc = cc.apply_moves(&moves);
+///     let moves = Formula::scramble();
+///     let cc = cc.apply_formula(&moves);
 ///     let mut solver = CrossSolver::new(cc, true);
 ///     let solution = solver.solve();
 ///     assert!(solver.is_solved());
@@ -86,13 +86,13 @@ impl CrossSolver {
 
 #[cfg(test)]
 mod tests {
-    use crate::{cubie::CubieCube, scramble, solver::lbl::cross::CrossSolver};
+    use crate::{cubie::CubieCube, moves::Formula, solver::lbl::cross::CrossSolver};
 
     #[test]
     fn test_cross() {
         let cc = CubieCube::default();
-        let moves = scramble();
-        let cc = cc.apply_moves(&moves);
+        let moves =Formula::scramble();
+        let cc = cc.apply_formula(&moves);
         let mut cross = CrossSolver::new(cc, true);
         let _cs = cross.solve();
         assert!(cross.is_solved());

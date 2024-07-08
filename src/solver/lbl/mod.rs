@@ -16,7 +16,7 @@ pub mod epll;
 pub mod middle;
 
 use crate::facelet::Color;
-use crate::moves::optimise_moves;
+use crate::moves::Formula;
 use crate::{cubie::CubieCube, moves::Move};
 
 pub use bottom::BottomCornerSolver;
@@ -32,13 +32,13 @@ pub use middle::MiddleEdgeSolver;
 /// # Example
 /// ```rust
 /// use rcuber::cubie::CubieCube;
-/// use rcuber::scramble;
+/// use rcuber::moves::Formula;
 /// use rcuber::solver::lbl::LBLSolver;
 ///
 /// fn main() {
 ///     let cc = CubieCube::default();
-///     let moves = scramble();
-///     let cc = cc.apply_moves(&moves);
+///     let moves = Formula::scramble();
+///     let cc = cc.apply_formula(&moves);
 ///     let mut solver = LBLSolver{cube: cc};
 ///     let solution = solver.solve();
 ///     assert!(solver.is_solved());
@@ -88,7 +88,7 @@ impl LBLSolver {
         assert!(epll.is_solved());
         self.cube = epll.cube;
         solution.append(&mut _eps);
-        optimise_moves(&solution)
+        Formula { moves: solution }.optimise().moves
     }
 
     pub fn is_solved(&self) -> bool {
@@ -116,13 +116,13 @@ pub fn get_put_move(i: usize, step: Move) -> Vec<Move> {
 
 #[cfg(test)]
 mod tests {
-    use crate::{cubie::CubieCube, scramble, solver::LBLSolver};
-    
+    use crate::{cubie::CubieCube, moves::Formula, solver::LBLSolver};
+
     #[test]
     fn test_lbl() {
         let cc = CubieCube::default();
-        let moves = scramble();
-        let cc = cc.apply_moves(&moves);
+        let moves = Formula::scramble();
+        let cc = cc.apply_formula(&moves);
         let cc2 = cc.clone();
         let mut solver = LBLSolver { cube: cc };
         let solution = solver.solve();

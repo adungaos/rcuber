@@ -1,10 +1,10 @@
-use std::collections::HashMap;
 use crate::{
     cubie::{Corner, CubieCube, Edge},
     facelet::Color,
-    moves::inverse_moves,
+    moves::Formula,
     moves::Move::{self, *},
 };
+use std::collections::HashMap;
 
 use super::{corner_to_pos, correct_slot, edge_to_pos};
 
@@ -12,15 +12,15 @@ use super::{corner_to_pos, correct_slot, edge_to_pos};
 /// # Example
 /// ```rust
 /// use rcuber::cubie::CubieCube;
-/// use rcuber::scramble;
+/// use rcuber::moves::Formula;
 /// use rcuber::solver::cfop::cross::CrossSolver;
 /// use rcuber::solver::cfop::f2l::F2LSolver;
 ///
 /// fn main() {
 ///     let cc = CubieCube::default();
-///     let moves = scramble();
+///     let moves = Formula::scramble();
 ///     println!("Scramble: {:?}", moves);
-///     let cc = cc.apply_moves(&moves);
+///     let cc = cc.apply_formula(&moves);
 ///     let mut cross = CrossSolver{cube: cc};
 ///     assert!(!cross.is_solved());
 ///     let solution = cross.solve();
@@ -54,7 +54,7 @@ impl F2LSolver {
             };
             slots_type.push((solver.pair.clone(), solver.get_slot_type()));
         }
-        slots_type.sort_by_key(|p|p.1);
+        slots_type.sort_by_key(|p| p.1);
         for p in slots_type {
             let mut solver = F2LPairSolver {
                 cube: self.cube,
@@ -88,7 +88,7 @@ impl F2LSolver {
     }
 }
 
-/// Slot Type by a pair's location. 
+/// Slot Type by a pair's location.
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
 pub enum SlotType {
     SOLVED,
@@ -98,7 +98,6 @@ pub enum SlotType {
     ESLOTFREE,
     DIFFSLOT,
 }
-
 
 /// Solver for F2L's one pair (corner & edge) / slot.
 pub struct F2LPairSolver {
@@ -277,7 +276,7 @@ impl F2LPairSolver {
                         result.append(&mut act);
                         return result;
                     }
-                    let act_rev = inverse_moves(&act);
+                    let act_rev = Formula { moves: act }.inverse().moves;
                     self.cube = self.cube.apply_moves(&act_rev);
                 }
                 match i {
@@ -337,7 +336,7 @@ impl F2LPairSolver {
                         result.append(&mut act);
                         return result;
                     }
-                    let act_rev = inverse_moves(&act);
+                    let act_rev = Formula { moves: act }.inverse().moves;
                     self.cube = self.cube.apply_moves(&act_rev);
                 }
                 match i {
@@ -391,7 +390,7 @@ impl F2LPairSolver {
                         result.append(&mut _combine);
                         return result;
                     }
-                    let act_rev = inverse_moves(&act);
+                    let act_rev = Formula { moves: act }.inverse().moves;
                     self.cube = self.cube.apply_moves(&act_rev);
                 }
                 match i {
@@ -571,7 +570,7 @@ impl F2LPairSolver {
                     combine.append(&mut put_act);
                     return combine;
                 }
-                let put_rev = inverse_moves(&put_act);
+                let put_rev = Formula { moves: put_act }.inverse().moves;
                 self.cube = self.cube.apply_moves(&put_rev);
             }
             match i {
@@ -600,7 +599,7 @@ impl F2LPairSolver {
 mod tests {
     use super::F2LSolver;
     use crate::cubie::CubieCube;
-    use crate::Move::*;
+    use crate::moves::Move::*;
     use crate::solver::cfop::cross::CrossSolver;
 
     #[test]
@@ -608,7 +607,7 @@ mod tests {
         let cc = CubieCube::default();
         let moves = vec![L2, R, F2, L, D, U, R, D, B3];
         let cc = cc.apply_moves(&moves);
-        let mut cross = CrossSolver{cube: cc};
+        let mut cross = CrossSolver { cube: cc };
         let _c = cross.solve();
         println!("{:?}", _c);
         let cc = cross.cube.clone();

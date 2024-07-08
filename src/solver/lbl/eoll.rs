@@ -9,8 +9,7 @@ use crate::{
 /// # Example
 /// ```rust
 /// use rcuber::cubie::CubieCube;
-/// use rcuber::scramble;
-/// use rcuber::moves::optimise_moves;
+/// use rcuber::moves::Formula;
 /// use rcuber::solver::lbl::cross::CrossSolver;
 /// use rcuber::solver::lbl::bottom::BottomCornerSolver;
 /// use rcuber::solver::lbl::middle::MiddleEdgeSolver;
@@ -18,18 +17,18 @@ use crate::{
 ///
 /// fn main() {
 ///     let cc = CubieCube::default();
-///     let moves = scramble();
-///     let cc = cc.apply_moves(&moves);
+///     let moves = Formula::scramble();
+///     let cc = cc.apply_formula(&moves);
 ///     let mut cross = CrossSolver::new(cc, true);
 ///     let _cs = cross.solve();
 ///     let mut bottom = BottomCornerSolver { cube: cross.cube };
 ///     let _bs = bottom.solve();
 ///     assert!(bottom.is_solved());
-///     let _bs = optimise_moves(&_bs);
+///     // let _bs = optimise_moves(&_bs);
 ///     let mut middle = MiddleEdgeSolver { cube: bottom.cube };
 ///     let _ms = middle.solve();
 ///     assert!(middle.is_solved());
-///     let _ms = optimise_moves(&_ms);
+///     // let _ms = optimise_moves(&_ms);
 ///     let mut eoll = EOLLSolver { cube: middle.cube };
 ///     let _eos = eoll.solve();
 ///     assert!(eoll.is_solved());
@@ -105,8 +104,7 @@ pub fn get_edges_u(cc: &CubieCube) -> Vec<(Edge, u8, u8)> {
 mod tests {
     use crate::{
         cubie::CubieCube,
-        moves::optimise_moves,
-        scramble,
+        moves::Formula,
         solver::lbl::{
             bottom::BottomCornerSolver, cross::CrossSolver, eoll::EOLLSolver,
             middle::MiddleEdgeSolver,
@@ -116,18 +114,18 @@ mod tests {
     #[test]
     fn test_eoll() {
         let cc = CubieCube::default();
-        let moves = scramble();
-        let cc = cc.apply_moves(&moves);
+        let moves =Formula::scramble();
+        let cc = cc.apply_formula(&moves);
         let mut cross = CrossSolver::new(cc, true);
         let _cs = cross.solve();
         let mut bottom = BottomCornerSolver { cube: cross.cube };
         let _bs = bottom.solve();
         assert!(bottom.is_solved());
-        let _bs = optimise_moves(&_bs);
+        // let _bs = optimise_moves(&_bs);
         let mut middle = MiddleEdgeSolver { cube: bottom.cube };
         let _ms = middle.solve();
         assert!(middle.is_solved());
-        let _ms = optimise_moves(&_ms);
+        // let _ms = optimise_moves(&_ms);
         let mut eoll = EOLLSolver { cube: middle.cube };
         let _eos = eoll.solve();
         assert!(eoll.is_solved());

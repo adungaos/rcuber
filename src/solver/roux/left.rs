@@ -5,14 +5,14 @@ use crate::{cubie::CubieCube, moves::Move};
 /// # Example
 /// ```rust
 /// use rcuber::cubie::CubieCube;
-/// use rcuber::scramble;
+/// use rcuber::moves::Formula;
 /// use rcuber::solver::roux::left::LBSolver;
 ///
 /// fn main() {
 ///     let cc = CubieCube::default();
-///     let moves = scramble();
+///     let moves =Formula::scramble();
 ///     println!("Scramble: {:?}", moves);
-///     let cc = cc.apply_moves(&moves);
+///     let cc = cc.apply_formula(&moves);
 ///     let mut lb = LBSolver{cube: cc};
 ///     let solution = lb.solve();
 ///     assert!(lb.is_solved());

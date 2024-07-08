@@ -1,65 +1,86 @@
-//! # min2phase 
+//! # min2phase
 //! `min2phase` - crate for rubiks cube and solver(min2phase).
 
-/// Module for represent moves.
-pub mod utils;
-/// Module containing 3x3 cube constants.
-pub mod constants;
-/// Module for represent a cube on the facelet level.
-pub mod cubie;
 /// Module for represent a cube on the cubie level(array model).
 pub mod arraycube;
+/// Module containing 3x3 cube constants.
+pub mod constants;
 /// Module for represent a cube on the coordinate level.
 pub mod coord;
+/// Module for represent a cube on the facelet level.
+/// Impl `From<&ArrayCube>` for CubieCube.
+pub mod cubie;
+/// Module for min2phase solver.
+pub mod solver;
 /// Module for data tables.
 pub mod tables;
-/// Module for min2phase search/solver.
-pub mod solver;
+/// Module for misc utils and tables.
+pub mod utils;
 
-pub use solver::Solver as Min2PhaseSolver;
+use crate::moves::Formula;
+use crate::{cubie::CubieCube, facelet::FaceCube};
+use solver::Solver;
 
-use std::str::FromStr;
-use rand::random;
-
-use crate::moves::Move::{self, *};
-
-/// Generate a random scramble formula.
-pub fn scramble() -> Vec<Move> {
-    let mut r = Vec::new();
-    let mut p = B;
-    for _ in 0..25 {
-        let m = match random::<u32>() % 6 {
-            0 => U,
-            1 => R,
-            2 => F,
-            3 => D,
-            4 => L,
-            _ => B,
-        };
-        if m == p {
-            continue;
-        }
-        let s = match random::<u32>() % 3 {
-            0 => "",
-            1 => "2",
-            _ => "'",
-        };
-        let mv = format!("{:?}{}", m, s);
-        let mv = Move::from_str(mv.as_str()).unwrap();
-        r.push(mv);
-        p = m;
-    }
-    r
+/// Min2PhaseSolver for solve a cube use min2phase method.
+/// # Example
+/// ```rust
+/// use rcuber::cubie::CubieCube;
+/// use rcuber::moves::Formula;
+/// use rcuber::solver::min2phase::Min2PhaseSolver;
+///
+/// fn main() {
+///     let cc = CubieCube::default();
+///     let formula = Formula::scramble();
+///     let cc = cc.apply_formula(&formula);
+///     let mut solver = Min2PhaseSolver{cube: cc};
+///     assert!(!solver.is_solved());
+///     let solution = solver.solve();
+///     assert!(solver.is_solved());
+///     println!("Scramble: {:?}\nSolution: {:?}", formula, solution);
+/// }
+/// ```
+/// For find a more optimal solution, use `min2phase::solver::solver::next`.
+///
+#[derive(Debug)]
+pub struct Min2PhaseSolver {
+    pub cube: CubieCube,
 }
 
+impl Min2PhaseSolver {
+    pub fn solve(&mut self) -> Formula {
+        let mut solver = Solver::default();
+        let s = solver
+            .solve(
+                FaceCube::try_from(&self.cube).unwrap().to_string().as_str(),
+                21,
+                1000000,
+                0,
+                0x0,
+            )
+            .unwrap();
+        self.cube = self.cube.apply_formula(&s);
+        s
+    }
+    pub fn is_solved(&self) -> bool {
+        self.cube == CubieCube::default()
+    }
+}
 
 #[cfg(test)]
 mod tests {
-    use crate::scramble;
+    use crate::cubie::CubieCube;
+    use crate::moves::Formula;
+    use crate::solver::min2phase::Min2PhaseSolver;
 
     #[test]
-    fn test_scramble(){
-        let r = scramble();
-        println!("{:?}", r);
+    fn test_solver() {
+        let cc = CubieCube::default();
+        let formula = Formula::scramble();
+        let cc = cc.apply_formula(&formula);
+        let mut solver = Min2PhaseSolver { cube: cc };
+        assert!(!solver.is_solved());
+        let solution = solver.solve();
+        assert!(solver.is_solved());
+        println!("Scramble: {:?}\nSolution: {:?}", formula, solution);
     }
 }

@@ -13,13 +13,13 @@ use crate::{
 /// # Example
 /// ```rust
 /// use rcuber::cubie::CubieCube;
-/// use rcuber::scramble;
+/// use rcuber::moves::Formula;
 /// use rcuber::solver::lbl::daisy::DaisySolver;
 ///
 /// fn main() {
 ///     let cc = CubieCube::default();
-///     let moves = scramble();
-///     let cc = cc.apply_moves(&moves);
+///     let moves = Formula::scramble();
+///     let cc = cc.apply_formula(&moves);
 ///     let cc2 = cc.clone();
 ///     let mut daisy = DaisySolver{cube: cc};
 ///     let _cs = daisy.solve();
@@ -234,13 +234,13 @@ impl DaisySolver {
 
 #[cfg(test)]
 mod tests {
-    use crate::{cubie::CubieCube, scramble, solver::lbl::daisy::DaisySolver};
+    use crate::{cubie::CubieCube, moves::Formula, solver::lbl::daisy::DaisySolver};
 
     #[test]
     fn test_daisy() {
         let cc = CubieCube::default();
-        let moves = scramble();
-        let cc = cc.apply_moves(&moves);
+        let moves = Formula::scramble();
+        let cc = cc.apply_formula(&moves);
         let cc2 = cc.clone();
         let mut daisy = DaisySolver { cube: cc };
         let _cs = daisy.solve();
