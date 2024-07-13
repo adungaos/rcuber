@@ -276,8 +276,8 @@ impl OLLSolver {
             vec![R, U, R3, U3, M3, U, R, U3, Rw3],
         );
         Self {
-            cube: cube,
-            algos: algos,
+            cube,
+            algos,
         }
     }
 

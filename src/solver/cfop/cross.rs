@@ -1,15 +1,12 @@
 use std::collections::{HashMap, HashSet};
 use std::str::FromStr;
 
+use crate::cubie::{
+    CubieCube,
+    Edge::{self, *},
+};
 use crate::facelet::Color;
 use crate::moves::Move::{self, *};
-use crate::{
-    constants::ALL_EDGES,
-    cubie::{
-        CubieCube,
-        Edge::{self, *},
-    },
-};
 
 use super::{a_star_search, edge_to_pos};
 
@@ -37,55 +34,11 @@ pub struct CrossSolver {
 }
 
 impl CrossSolver {
-    /// Simulate the cube rotation by updating four edges.
-    pub fn _rotate(edges: Vec<(Edge, u8, u8)>, step: Move) -> Vec<(Edge, u8, u8)> {
-        let mut cc = CubieCube::default();
-        let mut ep = cc.ep.clone();
-        let mut eo = cc.eo.clone();
-        for i in 4..8 {
-            ep[i] = UR;
-        }
-        for edge in edges.clone() {
-            let ei = edge.1 as usize;
-            ep[ei] = edge.0;
-            eo[ei] = edge.2;
-        }
-        for edge in ALL_EDGES {
-            let mut counts = HashMap::new();
-            for _edge in ep {
-                counts
-                    .entry(_edge)
-                    .and_modify(|counter| *counter += 1)
-                    .or_insert(1);
-            }
-            if !ep.contains(&edge) {
-                for _e in counts {
-                    if _e.1 > 1 {
-                        for i in 0..12 {
-                            if ep[i] == _e.0 {
-                                ep[i] = edge;
-                                break;
-                            }
-                        }
-                        break;
-                    }
-                }
-            }
-        }
-        cc.ep = ep;
-        cc.eo = eo;
-        let cc = cc.apply_move(step);
-        let d_edges = cc.get_edges_d();
-        // println!("Edges: {:?}, Move: {:?}, Got: {:?}", edges, step, d_edges);
-        d_edges
-    }
-
     /// Successors function for solving the cross.
     pub fn cross_successors(
-        state: ([Color; 6], Vec<(Edge, u8, u8)>),
+        state: &CubieCube,
         last_action: Option<Move>,
-    ) -> Vec<(Move, ([Color; 6], Vec<(Edge, u8, u8)>))> {
-        let (centres, edges) = state;
+    ) -> Vec<(Move, CubieCube)> {
         let mut acts = HashSet::new();
         for m in [
             R, R2, R3, L, L2, L3, U, U2, U3, D, D2, D3, F, F2, F3, B, B2, B3,
@@ -104,16 +57,16 @@ impl CrossSolver {
         acts.sort();
         let mut result = Vec::new();
         for step in acts {
-            let new_edges = CrossSolver::_rotate(edges.clone(), *step);
-            result.push((*step, (centres.clone(), new_edges)));
+            let new_state = state.apply_move(*step);
+            result.push((*step, new_state));
         }
         result
     }
 
     /// The goal function for cross solving search.
     /// MUST rotate cube to right position first.
-    pub fn cross_goal(state: ([Color; 6], Vec<(Edge, u8, u8)>)) -> bool {
-        let (_centres, edges) = state;
+    pub fn cross_goal(state: &CubieCube) -> bool {
+        let edges = state.get_edges_d();
         let mut solved = 0;
         for edge in edges {
             match edge {
@@ -128,8 +81,9 @@ impl CrossSolver {
     }
 
     /// Compute the state value of the cross solving search.
-    pub fn cross_state_value(state: ([Color; 6], Vec<(Edge, u8, u8)>)) -> u32 {
-        let (centres, edges) = state;
+    pub fn cross_state_value(state: &CubieCube) -> u32 {
+        let centres = state.center;
+        let edges = state.get_edges_d();
         let mut value = 0;
         for edge in edges.clone() {
             let _edge = Edge::try_from(edge.1).unwrap();
@@ -260,10 +214,8 @@ impl CrossSolver {
 
     /// Solve the cross.
     pub fn solve(&mut self) -> Vec<Move> {
-        let centers = self.cube.center;
-        let d_edges = self.cube.get_edges_d();
         let solution = a_star_search(
-            (centers, d_edges),
+            &self.cube,
             CrossSolver::cross_successors,
             CrossSolver::cross_state_value,
             CrossSolver::cross_goal,
@@ -273,9 +225,7 @@ impl CrossSolver {
     }
 
     pub fn is_solved(&self) -> bool {
-        let centers = self.cube.center;
-        let d_edges = self.cube.get_edges_d();
-        CrossSolver::cross_goal((centers, d_edges))
+        CrossSolver::cross_goal(&self.cube)
     }
 }
 
@@ -286,41 +236,22 @@ mod tests {
     #[test]
     fn test_cross_solver() {
         let cc = CubieCube::default();
-        let d_edges = cc.get_edges_d();
-        let solved = CrossSolver::cross_goal((cc.center, d_edges));
+        let solved = CrossSolver::cross_goal(&cc);
         assert!(solved);
-        // let moves = vec![
-        //     L2, B3, U, L2, F2, U, L2, D, R, B2, L3, F, U2, L2, B3, D3, F2, U3, L3, D, R2, U3, L
-        // ];
         let moves = vec![L2, R, F2, L, D, U, R, L, D, F, U];
         let cc = cc.apply_moves(&moves);
-
-        // let csv = CrossSolver::cross_state_value((cc.center, d_edges.clone()));
-        // assert_eq!(csv, 7);
-        // for edge in d_edges.clone() {
-        //     let _edge = Edge::try_from(edge.1).unwrap();
-        //     println!("{:?}, {:?}, {}, {}", edge.0, _edge, edge.1, edge.2);
-        // }
-        // let ne = CrossSolver::_rotate(d_edges.clone(), R);
-        // for edge in ne {
-        //     let _edge = Edge::try_from(edge.1).unwrap();
-        //     println!("{:?}, {:?}, {}, {}", edge.0, _edge, edge.1, edge.2);
-        // }
         let mut cs = CrossSolver { cube: cc };
         let result = cs.solve();
         let cc = cc.apply_moves(&result);
-        let d_edges = cc.get_edges_d();
-        let solved = CrossSolver::cross_goal((cc.center, d_edges.clone()));
+        let solved = CrossSolver::cross_goal(&cc);
         assert!(solved);
-        // println!("{:?}", result);
         let cc = CubieCube::default();
         let formula = Formula::scramble();
         let cc = cc.apply_formula(&formula);
         let mut cs = CrossSolver { cube: cc };
         let solution = cs.solve();
         let cc = cc.apply_moves(&solution);
-        let d_edges = cc.get_edges_d();
-        let solved = CrossSolver::cross_goal((cc.center, d_edges.clone()));
+        let solved = CrossSolver::cross_goal(&cc);
         assert!(solved);
         println!(
             "Scramble: {:?}, Solution: {:?}, Solved: {:?}",

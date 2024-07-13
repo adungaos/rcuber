@@ -79,40 +79,37 @@ impl CFOPSolver {
 }
 
 /// This is a searching function of A*
-pub fn a_star_search<'a, S, V, G>(
-    start: ([Color; 6], Vec<(Edge, u8, u8)>),
+pub fn a_star_search<S, V, G>(
+    start: &CubieCube,
     successors: S,
     state_value: V,
     is_goal: G,
 ) -> Vec<Move>
 where
-    S: Fn(
-        ([Color; 6], Vec<(Edge, u8, u8)>),
-        Option<Move>,
-    ) -> Vec<(Move, ([Color; 6], Vec<(Edge, u8, u8)>))>,
-    V: Fn(([Color; 6], Vec<(Edge, u8, u8)>)) -> u32,
-    G: Fn(([Color; 6], Vec<(Edge, u8, u8)>)) -> bool,
+    S: Fn(&CubieCube, Option<Move>) -> Vec<(Move, CubieCube)>,
+    V: Fn(&CubieCube) -> u32,
+    G: Fn(&CubieCube) -> bool,
 {
-    if is_goal(start.clone()) {
+    if is_goal(&start) {
         return Vec::new();
     }
     let mut explored = Vec::new();
-    let h = state_value(start.clone());
+    let h = state_value(&start);
     let g = 1;
     let f = g + h;
-    let p = vec![(None, start)];
+    let p = vec![(None, *start)];
     let mut frontier = Vec::new();
     frontier.push((f, g, h, p));
     while frontier.len() > 0 {
         let (_f, g, _h, path) = frontier.remove(0);
         let s = path.last().unwrap();
         let la = s.0;
-        for (action, state) in successors(s.1.clone(), la.clone()) {
+        for (action, state) in successors(&s.1, la.clone()) {
             if !explored.contains(&state) {
-                explored.push(state.clone());
+                explored.push(state);
                 let mut path2 = path.clone();
-                path2.push((Some(action), state.clone()));
-                if is_goal(state.clone()) {
+                path2.push((Some(action), state));
+                if is_goal(&state) {
                     let mut r = Vec::new();
                     for (a, _s) in path2 {
                         if a.is_some() {
@@ -121,7 +118,7 @@ where
                     }
                     return r;
                 } else {
-                    let h2 = state_value(state.clone());
+                    let h2 = state_value(&state);
                     let g2 = g + 1;
                     let f2 = h2 + g2;
                     frontier.push((f2, g2, h2, path2));

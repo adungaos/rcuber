@@ -137,8 +137,8 @@ impl<'a> PLLSolver<'a> {
         algos.insert("RFRFRFLBLBLB", vec![M2, U, M2, U, M3, U2, M2, U2, M3, U2]);
 
         Self {
-            cube: cube,
-            algos: algos,
+            cube,
+            algos,
         }
     }
 
