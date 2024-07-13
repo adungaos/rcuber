@@ -12,6 +12,13 @@ categories = ["algorithms"]
 license = "MIT"
 readme = "./README.md"
 
+[lib]
+bench = false
+
+[[bin]]
+bench = false
+name = "rcuber"
+
 [profile.dev]
 opt-level = 1
 
@@ -24,3 +31,10 @@ static_init = "1.0.3"
 [features]
 default = ["term"]
 term = ["crossterm"]
+
+[dev-dependencies]
+criterion = "0.5.1"
+
+[[bench]]
+name = "bench_solver"
+harness = false

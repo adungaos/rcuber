@@ -238,15 +238,15 @@ impl Generator {
         Generator::gen_state(cp, co, ep, eo)
     }
 
-    pub fn roux_lb_solved() -> CubieCube {
+    pub fn roux_fb_solved() -> CubieCube {
         let cp = [-1, -1, -1, -1, -1, 5, 6, -1];
         let co = [-1, -1, -1, -1, -1, 0, 0, -1];
-        let ep = [-1, -1, -1, -1, -1, -1, 6, -1, -1, -1, 10, 11];
-        let eo = [-1, -1, -1, -1, -1, -1, 0, -1, -1, -1, 0, 0];
+        let ep = [-1, -1, -1, -1, -1, -1, 6, -1, -1, 9, 10, -1];
+        let eo = [-1, -1, -1, -1, -1, -1, 0, -1, -1, 0, 0, -1];
         Generator::gen_state(cp, co, ep, eo)
     }
 
-    pub fn roux_lb_rb_solved() -> CubieCube {
+    pub fn roux_fb_sb_solved() -> CubieCube {
         let cp = [-1, -1, -1, -1, 4, 5, 6, 7];
         let co = [-1, -1, -1, -1, 0, 0, 0, 0];
         let ep = [-1, -1, -1, -1, 4, -1, 6, -1, 8, 9, 10, 11];
@@ -263,7 +263,7 @@ mod tests {
 
     #[test]
     fn test_generator() {
-        let cc = Generator::corss_solved();
+        let cc = Generator::roux_fb_sb_solved();
         let fc = FaceCube::try_from(&cc).unwrap();
         println!("{}", fc.to_string());
         let _ = print_facelet(&fc);

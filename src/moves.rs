@@ -398,6 +398,8 @@ pub const S_MOVE: CubieCube = CubieCube {
     eo: [1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0],
 };
 
+
+/// `Formula` to is represent of `Move` sequence
 #[derive(Debug)]
 pub struct Formula {
     pub moves: Vec<Move>,
@@ -411,7 +413,8 @@ impl Default for Formula {
 
 impl Display for Formula {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{:?}", self.moves)
+        let s: String = self.moves.iter().map(|m|Move::to_string(m) + " ").collect();
+        write!(f, "{}", s.trim())
     }
 }
 
