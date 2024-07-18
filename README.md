@@ -1,5 +1,5 @@
 # RCuber
-Rust Cuber, 一个Rust版本的魔方(Rubick's Cube)库，支持终端展示和一系列的解法（CFOP、LBL、Min2Phase）。
+Rust Cuber, 一个Rust版本的魔方(Rubick's Cube)库，支持终端展示和一系列的解法（CFOP、LBL、Roux、Min2Phase）。
 
 ### 基本设计
 1. [kociemba](https://crates.io/crates/kociemba)的基础魔方库（`CubieCube`,`FaceCube`,`Move`）。
