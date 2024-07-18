@@ -7,7 +7,7 @@ authors = [
   "Adun Gaos <adungaos@gmail.com>",
 ]
 repository = "https://github.com/adungaos/rcuber"
-keywords = ["rubiks-cube", "cube-solver", "cfop", "lbl", "roux", "min2phase"]
+keywords = ["rubiks-cube", "cfop", "lbl", "roux", "min2phase"]
 categories = ["algorithms"]
 license = "MIT"
 readme = "./README.md"
