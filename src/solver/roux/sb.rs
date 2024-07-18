@@ -7,12 +7,13 @@ use crate::{
 
 use super::get_available_move;
 
-/// FBSolver for solve Roux's First Block(a 1x2x3 block at left bottom).
+/// SBSolver for solve Roux's Second Block(a 1x2x3 block at right bottom).
 /// # Example
 /// ```rust
 /// use rcuber::cubie::CubieCube;
 /// use rcuber::moves::Formula;
 /// use rcuber::solver::roux::fb::FBSolver;
+/// use rcuber::solver::roux::sb::SBSolver;
 ///
 /// fn main() {
 ///     let cc = CubieCube::default();
@@ -23,35 +24,36 @@ use super::get_available_move;
 ///     let solution = fb.solve();
 ///     assert!(fb.is_solved());
 ///     println!("First Block Solution: {:?}", solution);
+///     let mut sb = SBSolver::new(fb.cube);
+///     let solution = sb.solve();
+///     assert!(sb.is_solved());
+///     println!("Second Block Solution: {:?}", solution);
 /// }
 /// ```
 
 #[derive(Debug)]
-pub struct FBSolver {
+pub struct SBSolver {
     pub cube: CubieCube,
     min_depth: i32,
     max_depth: i32,
     solution: Vec<Move>,
-    pruner: FBPruner,
+    pruner: SBPruner,
     moveset: Vec<Move>,
     next_moves: HashMap<Move, Vec<Move>>,
 }
 
-impl FBSolver {
+impl SBSolver {
     pub fn new(cube: CubieCube) -> Self {
-        let moveset = vec![
-            R, R2, R3, L, L2, L3, U, U2, U3, D, D2, D3, F, F2, F3, B, B2, B3, M, M2, M3, Rw, Rw2,
-            Rw3,
-        ];
+        let moveset = vec![R, R2, R3, U, U2, U3, M, M2, M3, Rw, Rw2, Rw3];
         let mut next_moves = HashMap::new();
         for m in moveset.clone() {
             next_moves.insert(m, get_available_move(m, &moveset));
         }
-        let pruner = FBPruner::new();
+        let pruner = SBPruner::new();
         Self {
             cube,
             min_depth: 0,
-            max_depth: 9,
+            max_depth: 14,
             solution: Vec::new(),
             pruner,
             moveset,
@@ -60,20 +62,20 @@ impl FBSolver {
     }
 
     pub fn is_solved(&self) -> bool {
-        if self.cube.center[4] != SOLVED_CUBIE_CUBE.center[4] {
+        if self.cube.center[1] != SOLVED_CUBIE_CUBE.center[1] {
             return false;
         }
-        let (corners, edges) = FBSolver::get_state(&self.cube);
+        let (corners, edges) = SBSolver::get_state(&self.cube);
         let mut solved = 0;
         for c in corners {
             match c {
-                (Corner::DLF, 5, 0) | (Corner::DBL, 6, 0) => solved += 1,
+                (Corner::DFR, 4, 0) | (Corner::DRB, 7, 0) => solved += 1,
                 _ => {}
             };
         }
         for e in edges {
             match e {
-                (Edge::FL, 9, 0) | (Edge::BL, 10, 0) | (Edge::DL, 6, 0) => solved += 1,
+                (Edge::DR, 4, 0) | (Edge::FR, 8, 0) | (Edge::BR, 11, 0) => solved += 1,
                 _ => {}
             };
         }
@@ -87,14 +89,14 @@ impl FBSolver {
         let mut corners = Vec::new();
         for i in 0..8 {
             match state.cp[i] {
-                Corner::DLF | Corner::DBL => corners.push((state.cp[i], i as u8, state.co[i])),
+                Corner::DFR | Corner::DRB => corners.push((state.cp[i], i as u8, state.co[i])),
                 _ => {}
             }
         }
         let mut edges = Vec::new();
         for i in 0..12 {
             match state.ep[i] {
-                Edge::DL | Edge::FL | Edge::BL => edges.push((state.ep[i], i as u8, state.eo[i])),
+                Edge::DR | Edge::FR | Edge::BR => edges.push((state.ep[i], i as u8, state.eo[i])),
                 _ => {}
             }
         }
@@ -153,11 +155,11 @@ impl FBSolver {
             false => self.moveset.clone(),
         };
         let mut seen_encodings = HashSet::new();
-        seen_encodings.insert(FBPruner::encode(cube));
+        seen_encodings.insert(SBPruner::encode(cube));
 
         for m in available_moves.iter() {
             let new_cube = cube.apply_move(*m);
-            let enc = FBPruner::encode(&new_cube);
+            let enc = SBPruner::encode(&new_cube);
             if seen_encodings.len() == 0 || !seen_encodings.contains(&enc) {
                 seen_encodings.insert(enc);
                 solution.push(*m);
@@ -173,27 +175,24 @@ impl FBSolver {
 }
 
 #[derive(Debug)]
-pub struct FBPruner {
+pub struct SBPruner {
     max_depth: u8,
     dist: Vec<u8>,
 }
 
-impl FBPruner {
+impl SBPruner {
     pub fn new() -> Self {
         let size = 24usize.pow(3) * 24usize.pow(2);
         let solved_states = vec![CubieCube::default()];
-        let max_depth = 5;
-        let moves = vec![
-            R, R2, R3, L, L2, L3, U, U2, U3, D, D2, D3, F, F2, F3, B, B2, B3, M, M2, M3, Rw, Rw2,
-            Rw3,
-        ];
+        let max_depth = 6;
+        let moves = vec![R, R2, R3, U, U2, U3, M, M2, M3, Rw, Rw2, Rw3];
 
         let mut dist: Vec<u8> = Vec::new();
         for _ in 0..size {
             dist.push(255);
         }
         for state in solved_states.iter() {
-            dist[FBPruner::encode(state)] = 0;
+            dist[SBPruner::encode(state)] = 0;
         }
         let mut frontier = solved_states.clone();
         for i in 0..max_depth {
@@ -201,7 +200,7 @@ impl FBPruner {
             for state in frontier {
                 for m in moves.iter() {
                     let new_state = state.apply_move(*m);
-                    let idx = FBPruner::encode(&new_state);
+                    let idx = SBPruner::encode(&new_state);
                     if dist[idx] == 255 {
                         dist[idx] = i as u8 + 1;
                         new_frontier.push(new_state);
@@ -218,8 +217,8 @@ impl FBPruner {
         let mut c2 = 0;
         for i in 0..8 {
             match cube.cp[i] {
-                Corner::DLF => c1 = i * 3 + cube.co[i] as usize,
-                Corner::DBL => c2 = i * 3 + cube.co[i] as usize,
+                Corner::DFR => c1 = i * 3 + cube.co[i] as usize,
+                Corner::DRB => c2 = i * 3 + cube.co[i] as usize,
                 _ => {}
             }
         }
@@ -229,9 +228,9 @@ impl FBPruner {
         let mut e3 = 0;
         for i in 0..12 {
             match cube.ep[i] {
-                Edge::DL => e1 = i * 2 + cube.eo[i] as usize,
-                Edge::FL => e2 = i * 2 + cube.eo[i] as usize,
-                Edge::BL => e3 = i * 2 + cube.eo[i] as usize,
+                Edge::DR => e1 = i * 2 + cube.eo[i] as usize,
+                Edge::FR => e2 = i * 2 + cube.eo[i] as usize,
+                Edge::BR => e3 = i * 2 + cube.eo[i] as usize,
                 _ => {}
             }
         }
@@ -240,7 +239,7 @@ impl FBPruner {
     }
 
     fn query(&self, cube: &CubieCube) -> u8 {
-        let d = self.dist[FBPruner::encode(cube)];
+        let d = self.dist[SBPruner::encode(cube)];
         if d == 255 {
             return self.max_depth + 1;
         }
@@ -250,22 +249,28 @@ impl FBPruner {
 
 #[cfg(test)]
 mod tests {
-    use super::FBSolver;
+    use super::SBSolver;
+    use super::super::fb::FBSolver;
     use crate::{
         cubie::CubieCube,
         moves::{Formula, Move::*},
     };
 
     #[test]
-    fn test_fb() {
+    fn test_sb() {
         let cc = CubieCube::default();
         let _f = Formula { moves: vec![L2] };
         let _f = Formula::scramble();
         println!("Scramble: {:?}", _f);
         let cc = cc.apply_formula(&_f);
-        let mut solver = FBSolver::new(cc);
-        let _s = solver.solve();
-        assert!(solver.is_solved());
-        println!("First Block Solution: {:?}", _s);
+        let mut fb = FBSolver::new(cc);
+        let _f = fb.solve();
+        assert!(fb.is_solved());
+        println!("First Block Solution: {:?}", _f);
+        let mut sb = SBSolver::new(fb.cube);
+        let _s = sb.solve();
+        println!("Second Block Solution: {:?}", _s);
+        assert!(sb.is_solved());
     }
+    
 }

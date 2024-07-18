@@ -1,6 +1,7 @@
+use std::time::Instant;
+
 use rcuber::cubie::CubieCube;
 use rcuber::facelet::FaceCube;
-use rcuber::generator::Generator;
 use rcuber::moves::Formula;
 #[allow(unused_imports)]
 use rcuber::moves::Move::*;
@@ -8,7 +9,7 @@ use rcuber::moves::Move::*;
 use rcuber::printer::print_facelet;
 use rcuber::solver::cfop::CFOPSolver;
 use rcuber::solver::lbl::LBLSolver;
-use rcuber::solver::roux::fb::FBSolver;
+use rcuber::solver::roux::RouxSolver;
 use rcuber::solver::Min2PhaseSolver;
 
 fn main() {
@@ -18,31 +19,50 @@ fn main() {
     let cc = cc.apply_formula(&moves);
     let cc2 = cc.clone();
     let cc3 = cc.clone();
+    let cc4 = cc.clone();
     let fc = FaceCube::try_from(&cc).unwrap();
     let _r = print_facelet(&fc);
+    let start = Instant::now();
     let mut lbl = LBLSolver { cube: cc };
     let lbls = lbl.solve();
     assert!(lbl.is_solved());
-    let fc = FaceCube::try_from(&lbl.cube).unwrap();
-    let _r = print_facelet(&fc);
-    println!("LBL Solution: {:?}, Len: {}", lbls, lbls.len());
+    let lble = start.elapsed();
+    println!(
+        "LBL Solution: {:?}, Len: {}, Time: {:?}",
+        lbls,
+        lbls.len(),
+        lble
+    );
+    let start = Instant::now();
     let mut cfop = CFOPSolver { cube: cc2 };
     let cfops = cfop.solve();
-    println!("CFOP Solution: {:?}, Len: {}", cfops, cfops.len());
-    let mut m2p = Min2PhaseSolver { cube: cc3 };
+    let cfope = start.elapsed();
+    println!(
+        "CFOP Solution: {:?}, Len: {}, Time: {:?}",
+        cfops,
+        cfops.len(),
+        cfope
+    );
+    let start = Instant::now();
+    let mut roux = RouxSolver { cube: cc3 };
+    let rouxs = roux.solve();
+    let rouxe = start.elapsed();
+    println!(
+        "Roux Solution: {:?}, Len: {}, Time: {:?}",
+        rouxs,
+        rouxs.len(),
+        rouxe
+    );
+    let start = Instant::now();
+    let mut m2p = Min2PhaseSolver { cube: cc4 };
     let m2ps = m2p.solve();
-    println!("Min2Phase Solution: {}, Len: {}", m2ps, m2ps.moves.len());
-    let rc = Generator::roux_fb_solved();
-    let fc = FaceCube::try_from(&rc).unwrap();
-    let _r = print_facelet(&fc);
-
-    let cc = CubieCube::default();
-    let f = Formula::scramble();
-    println!("Scramble: {:?}", f);
-    let cc = cc.apply_formula(&f);
-    let mut fb = FBSolver { cube: cc };
-    let solution = fb.solve();
-    println!("First Block Solution: {:?}", solution);
-    assert!(fb.is_solved());
-    println!("First Block Solution: {:?}", solution);
+    let m2pe = start.elapsed();
+    println!(
+        "Min2Phase Solution: {}, Len: {}, Time: {:?}",
+        m2ps,
+        m2ps.moves.len(),
+        m2pe
+    );
+    // let fc = FaceCube::try_from(&lbl.cube).unwrap();
+    // let _r = print_facelet(&fc);
 }

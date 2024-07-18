@@ -1,13 +1,13 @@
 [package]
 name = "rcuber"
-version = "0.3.0"
+version = "0.7.18"
 edition = "2021"
-description = "crate for rubiks cube and solver (CFOP, LBL)"
+description = "crate for rubiks cube and solver (LBL, CFOP, Roux, min2phase)"
 authors = [
   "Adun Gaos <adungaos@gmail.com>",
 ]
 repository = "https://github.com/adungaos/rcuber"
-keywords = ["rubiks-cube", "cube-solver", "cfop", "lbl"]
+keywords = ["rubiks-cube", "cube-solver", "cfop", "lbl", "roux", "min2phase"]
 categories = ["algorithms"]
 license = "MIT"
 readme = "./README.md"
