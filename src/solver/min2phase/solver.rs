@@ -180,7 +180,7 @@ impl Solver {
         self.cc.verify()
     }
 
-    pub fn init_search(&mut self) {
+    fn init_search(&mut self) {
         self.conj_mask = match TRY_INVERSE {
             true => 0,
             false => 0x38,

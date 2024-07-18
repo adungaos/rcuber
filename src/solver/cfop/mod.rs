@@ -1,3 +1,21 @@
+//! # CFOP
+//! `CFOP` (Cross, F2L, OLL, PLL, pronounced C-F-O-P or C-fop) is a 3x3 speedsolving method proposed by several cubers around 1981.
+//! It is also known as the Fridrich Method after its popularizer, Jessica Fridrich.
+//! In part due to Fridrich's publication of the method on her website in 1995, CFOP has been the most dominant 3x3 speedcubing method since around 2000.
+//! # Steps
+//! `CFOP` can be viewed as an advanced version of a Layer-By-Layer method. It takes the same steps, but combines some of them, solving more of the cube at once.
+//! ## Cross
+//! The first step is to make a cross on the bottom face by solving four edge pieces that share one color (white in this example).
+//! Virtually all top CFOP solvers nowadays solve the cross on bottom to avoid doing a z2 or x2 cube rotation. Previously in the 2000s it was also popular to solve on a different face, for example Cross on left. Many top solvers are also color neutral, meaning they are able to solve the cross on any color. This allows them to find better solutions in many cases.
+//! ## F2L (First Two Layers)
+//! In between the solved cross edges and their corresponding centers are four slots that contains a corner and an edge piece. The goal of this step is to fill in these slots with the right pieces to solve the first two layers at the same time. This is accomplished by pairing up a corner that shares a color with the cross, and an edge that shares its colors with said corner, then inserting them together. The completion of this step leaves one with just the last layer, typically placed on top.
+//! ## OLL (Orientation of the Last Layer)
+//! In this step, the goal is to make the top face one color. There are 57 nontrivial cases, and therefore 57 algorithms to learn for this step
+//! Those new to OLL break up the step into two. This greatly reduces the number of cases; 2-look OLL has 9 cases. However, note that this is a few seconds slower
+//! ## PLL (Permutation of the Last Layer)
+//! Finally, the cube is solved by permuting the pieces of the last layer, in other words putting them in the correct position. There are 21 nontrivial cases for this step.
+//! Those new to PLL break up the step into two. This greatly reduces the number of cases; 2-look PLL has 6 cases. However, note that this is a few seconds slower
+
 use std::collections::HashMap;
 
 pub use cross::CrossSolver;
@@ -131,7 +149,7 @@ where
 }
 
 /// Split Edge expression (ex UR) to two faces(ex U & R).  
-pub fn edge_to_face(edge: Edge) -> (Color, Color) {
+fn edge_to_face(edge: Edge) -> (Color, Color) {
     let edge = format!("{:?}", edge);
     let edge = edge.as_bytes();
     (
@@ -141,7 +159,7 @@ pub fn edge_to_face(edge: Edge) -> (Color, Color) {
 }
 
 /// Get the colors of Edge's faces. Ex, (Original Edge, current Position, orientation) -> (Current Face, Original Color)x2.  
-pub fn edge_to_pos(edge: (Edge, u8, u8)) -> [(Color, Color); 2] {
+fn edge_to_pos(edge: (Edge, u8, u8)) -> [(Color, Color); 2] {
     let _edge = Edge::try_from(edge.1).unwrap();
     let colors = edge_to_face(edge.0);
     let faces = edge_to_face(_edge);
@@ -153,7 +171,7 @@ pub fn edge_to_pos(edge: (Edge, u8, u8)) -> [(Color, Color); 2] {
 }
 
 /// Correct slot vector's order.
-pub fn correct_slot(slot: [Color; 2]) -> [Color; 2] {
+fn correct_slot(slot: [Color; 2]) -> [Color; 2] {
     match slot {
         [Color::R, Color::F] => [Color::F, Color::R],
         [Color::R, Color::B] => [Color::B, Color::R],
@@ -164,7 +182,7 @@ pub fn correct_slot(slot: [Color; 2]) -> [Color; 2] {
 }
 
 /// Split Corner expression (ex URF) to three faces(ex U, R, F).  
-pub fn corner_to_face(corner: Corner) -> (Color, Color, Color) {
+fn corner_to_face(corner: Corner) -> (Color, Color, Color) {
     let corner = format!("{:?}", corner);
     let corner = corner.as_bytes();
     (
@@ -176,7 +194,7 @@ pub fn corner_to_face(corner: Corner) -> (Color, Color, Color) {
 
 /// Get the colors of Corner's faces.
 /// Ex, (Original Corner, current Position, orientation) -> (Current Face: Original Color)x3.  
-pub fn corner_to_pos(corner: (Corner, u8, u8)) -> HashMap<Color, Color> {
+fn corner_to_pos(corner: (Corner, u8, u8)) -> HashMap<Color, Color> {
     let _corner = Corner::try_from(corner.1).unwrap();
     let colors = corner_to_face(corner.0);
     let faces = corner_to_face(_corner);

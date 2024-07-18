@@ -4,7 +4,9 @@ pub use crate::cubie::CubieCube;
 use crate::cubie::{Corner::*, Edge::*};
 use crate::facelet::*;
 
+/// Convert an ArrayCube to CubieCube.
 impl From<&ArrayCube> for CubieCube {
+    /// Convert an ArrayCube to CubieCube.
     fn from(ac: &ArrayCube) -> Self {
         let center = [Color::U, Color::R, Color::F, Color::D, Color::L, Color::B];
         let mut cp = [URF; 8];

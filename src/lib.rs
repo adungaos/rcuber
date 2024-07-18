@@ -1,6 +1,7 @@
 //! # RCuber 
-//! `RCuber` - crate for rubiks cube and solvers(CFOP,LBL,Roux).
+//! `RCuber` - crate for rubiks cube and solvers(CFOP,LBL,Roux,min2phase).
 
+/// Module for Errors.
 pub mod error;
 /// Module containing 3x3 cube constants.
 pub mod constants;

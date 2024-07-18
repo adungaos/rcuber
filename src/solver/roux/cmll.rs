@@ -36,7 +36,7 @@ use std::collections::HashMap;
 
 pub struct CMLLSolver {
     pub cube: CubieCube,
-    pub algos: HashMap<String, Vec<Move>>,
+    algos: HashMap<String, Vec<Move>>,
 }
 
 impl CMLLSolver {
@@ -216,7 +216,7 @@ impl CMLLSolver {
         Self { cube, algos }
     }
 
-    /// Recognise which is Cube's OLL case.
+    /// Recognise which is Cube's CMLL case.
     fn recognise(&self) -> [Color; 8] {
         let mut idx = [Color::U; 8];
         for i in 0..4 {
@@ -229,7 +229,7 @@ impl CMLLSolver {
         idx
     }
 
-    /// Solve the OLL. Returns an Formula.
+    /// Solve the CMLL. Returns an `Vec<Move>`.
     pub fn solve(&mut self) -> Vec<Move> {
         let mut result = Vec::new();
         for i in 0..4 {
@@ -254,7 +254,6 @@ impl CMLLSolver {
                     .map(|c| format!("{:?}", c))
                     .collect();
                 let algo = self.algos.get(&case);
-                // println!("I: {}, Case: {:?}, algo: {:?}", i, case, algo);
                 if algo.is_some() {
                     let algo = Formula {
                         moves: algo.unwrap().clone(),
@@ -274,7 +273,6 @@ impl CMLLSolver {
                         };
                         self.cube = self.cube.apply_formula(&j_put);
                         self.cube = self.cube.apply_formula(&algo);
-                        // println!("Case: {:?}, algo: {:?}", case, algo);
                         for k in 0..4 {
                             let mut k_put = match k {
                                 1 => Formula {
@@ -290,7 +288,6 @@ impl CMLLSolver {
                             };
                             self.cube = self.cube.apply_formula(&k_put);
                             if self.is_solved() {
-                                // println!("i: {}, j: {}, k: {}, Case: {:?}, algo: {:?}", i, j, k, case, algo);
                                 result.append(&mut i_put.moves);
                                 result.append(&mut j_put.moves);
                                 result.append(&mut self.algos[&case].clone());
@@ -325,6 +322,7 @@ impl CMLLSolver {
     }
 }
 
+/// get two colors at RFLB faces of a corner.
 fn get_colors(cp: Corner, co: u8) -> (Color, Color) {
     let color = corner_to_face(cp);
     match co {

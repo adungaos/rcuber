@@ -175,19 +175,19 @@ impl SBSolver {
 }
 
 #[derive(Debug)]
-pub struct SBPruner {
+struct SBPruner {
     max_depth: u8,
     dist: Vec<u8>,
 }
 
 impl SBPruner {
-    pub fn new() -> Self {
+    fn new() -> Self {
         let size = 24usize.pow(3) * 24usize.pow(2);
         let solved_states = vec![CubieCube::default()];
-        let max_depth = 6;
+        let max_depth = 7;
         let moves = vec![R, R2, R3, U, U2, U3, M, M2, M3, Rw, Rw2, Rw3];
 
-        let mut dist: Vec<u8> = Vec::new();
+        let mut dist: Vec<u8> = Vec::with_capacity(size);
         for _ in 0..size {
             dist.push(255);
         }
@@ -199,7 +199,9 @@ impl SBPruner {
             let mut new_frontier = Vec::new();
             for state in frontier {
                 for m in moves.iter() {
-                    let new_state = state.apply_move(*m);
+                    let mut new_state = state.clone();
+                    new_state.multiply_move(*m);
+                    // let new_state = state.apply_move(*m);
                     let idx = SBPruner::encode(&new_state);
                     if dist[idx] == 255 {
                         dist[idx] = i as u8 + 1;

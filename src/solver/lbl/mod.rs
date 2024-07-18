@@ -1,3 +1,21 @@
+//! # LBL(Layer-By-Layer)
+//! `LBL` is a group of methods that solves the cube in layers.
+//! In the basic, beginner LBL method, the solver finishes the layers one at a time: 
+//! the first layer edges, then corners, then the second layer edges, and finally the last layer. 
+//! This is a common method for new cubers to discover on their own.
+//! In more advanced LBL methods, you solve layers more efficiently or solve two layers at once. 
+//! For example, in the CFOP method, one solves the first two layers simultaneously by forming a cross of the first layer edges, and then filling in four pairs of a corner and an edge into the so-called slots.
+//! With this method, the novice cuber truly completes each layer one after the other, using few algorithms (but taking perhaps over 100 moves). This is one of the most popular beginners' methods in existence.
+//! # Steps
+//! 0. ( Daisy )
+//! 1. Bottom layer: Corners XG (Cross plus Corners)
+//! 2. Middle Layer: Insert the 4 middle layer edges (each edge is inserted individually)
+//! 3. 4-Look Last Layer, sometimes actually more like 8-looks by re-using algorithms
+//! * orientation of edges
+//! * orientation of corners
+//! * permutation of corners
+//! * permutation of edges
+
 /// Module for BottomCornerSolver of LBL(Layer by Layer) method(step 2).
 pub mod bottom;
 /// Module for COLLSolver(Corner Orientation of Last Layer) of LBL(Layer by Layer) method(step 5).

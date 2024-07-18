@@ -1,5 +1,11 @@
 //! # min2phase
-//! `min2phase` - crate for rubiks cube and solver(min2phase).
+//! ## Two-phase algorithm
+//! See [Kociemba's page](http://kociemba.org/cube.htm)
+//! ## `min2phase` Improvements compared with conventional two-phase algorithm
+//!    Conventional two-phase algorithm only find (sub-)optimal solutions to <U,R2,F2,D,L2,B2>. However, If we are able to find more phase1 solutions within a limited depth, the probability of finding a short solution will be increased.
+//!    - Try different axes: The target of phase1 can be either <U,R2,F2,D,L2,B2>, <U2,R,F2,D2,L,B2>, or <U2,R2,F,D2,L2,B>.
+//!    - Try the inverse of the state: We will try to solve the inverse state simultaneously to find more phase1 solutions.
+//!    - Try pre-scramble: We can also use pre-scramble technique (which is widely used in fewest-move challenge) to find more phase1 solutions. If PreMoves \* Scramble \* Phase1 \* Phase2 = Solved, then Scramble \* (Phase1 \* Phase2 \* PreMoves) = Solved, Solution = Phase1 \* Phase2 \* PreMoves.
 
 /// Module for represent a cube on the cubie level(array model).
 pub mod arraycube;

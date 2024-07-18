@@ -23,7 +23,7 @@ pub struct ArrayCube {
     pub ea: [u8; 12],
 }
 
-/// Solved cube on the cubie level.
+/// Solved ArrayCube on the cubie level.
 pub const SOLVED_ARRAY_CUBE: ArrayCube = ArrayCube {
     ca: [0, 1, 2, 3, 4, 5, 6, 7],
     ea: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
@@ -35,9 +35,10 @@ impl Default for ArrayCube {
     }
 }
 
-/// Build an ArrayCube from CubieCube.
+/// Convert a CubieCube to ArrayCube.
 impl From<&CubieCube> for ArrayCube {
-    fn from(cc: &CubieCube) -> Self {
+    /// Convert a CubieCube to ArrayCube.
+    fn from(cc: &CubieCube) -> ArrayCube {
         let mut ca = [0; 8];
         let mut ea = [0; 12];
         for i in 0..8 {
@@ -52,6 +53,7 @@ impl From<&CubieCube> for ArrayCube {
 
 /// Build an ArrayCube from PermOriCube.
 impl From<PermOriCube> for ArrayCube {
+    /// Build an ArrayCube from PermOriCube.
     fn from(po: PermOriCube) -> Self {
         let mut cc = ArrayCube::default();
         cc.set_perm_corner(po.perm_corner as usize);

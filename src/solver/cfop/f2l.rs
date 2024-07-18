@@ -90,7 +90,7 @@ impl F2LSolver {
 
 /// Slot Type by a pair's location.
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
-pub enum SlotType {
+enum SlotType {
     SOLVED,
     SLOTFREE,
     CSLOTFREE,
@@ -100,14 +100,14 @@ pub enum SlotType {
 }
 
 /// Solver for F2L's one pair (corner & edge) / slot.
-pub struct F2LPairSolver {
+struct F2LPairSolver {
     pub cube: CubieCube,
     pub pair: [Color; 2],
 }
 
 impl F2LPairSolver {
     /// Get the F2L pair (corner, edge).
-    pub fn get_pair(&self) -> ((Corner, u8, u8), (Edge, u8, u8)) {
+    fn get_pair(&self) -> ((Corner, u8, u8), (Edge, u8, u8)) {
         let edge = format!("{:?}{:?}", self.pair[0], self.pair[1]);
         let edge = Edge::try_from(edge.as_str()).unwrap();
         let corner = format!("{:?}{:?}{:?}", Color::D, self.pair[0], self.pair[1]);
@@ -141,7 +141,7 @@ impl F2LPairSolver {
     }
 
     /// Get the estimated cubie of solved pair.
-    pub fn estimated_position(&self) -> ((Corner, u8, u8), (Edge, u8, u8)) {
+    fn estimated_position(&self) -> ((Corner, u8, u8), (Edge, u8, u8)) {
         let pair = self.get_pair();
         (
             (pair.0 .0, pair.0 .0 as u8, 0),
@@ -150,7 +150,7 @@ impl F2LPairSolver {
     }
 
     /// Get the slot type of the pair.
-    pub fn get_slot_type(&self) -> SlotType {
+    fn get_slot_type(&self) -> SlotType {
         let (corner, edge) = self.get_pair();
         let cc = CubieCube::default();
         let cp = cc.cp[corner.1 as usize];
@@ -188,7 +188,7 @@ impl F2LPairSolver {
     }
 
     /// Move the paired corner & edge to U face.
-    pub fn pair_to_uface(&mut self) -> Vec<Move> {
+    fn pair_to_uface(&mut self) -> Vec<Move> {
         let mut result = Vec::new();
         let mut put_acts = HashMap::new();
         put_acts.insert(
@@ -411,7 +411,7 @@ impl F2LPairSolver {
     }
 
     /// Solve the pair.
-    pub fn solve(&mut self) -> Vec<Move> {
+    fn solve(&mut self) -> Vec<Move> {
         let mut combine = self.pair_to_uface();
         let estimated = self.estimated_position();
         for i in 0..4 {
@@ -590,7 +590,7 @@ impl F2LPairSolver {
     }
 
     /// Check if the pair is solved.
-    pub fn is_solved(&self) -> bool {
+    fn is_solved(&self) -> bool {
         self.get_pair() == self.estimated_position()
     }
 }

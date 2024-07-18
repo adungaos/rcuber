@@ -35,7 +35,7 @@ pub struct CrossSolver {
 
 impl CrossSolver {
     /// Successors function for solving the cross.
-    pub fn cross_successors(
+    fn cross_successors(
         state: &CubieCube,
         last_action: Option<Move>,
     ) -> Vec<(Move, CubieCube)> {
@@ -65,7 +65,7 @@ impl CrossSolver {
 
     /// The goal function for cross solving search.
     /// MUST rotate cube to right position first.
-    pub fn cross_goal(state: &CubieCube) -> bool {
+    fn cross_goal(state: &CubieCube) -> bool {
         let edges = state.get_edges_d();
         let mut solved = 0;
         for edge in edges {
@@ -81,7 +81,7 @@ impl CrossSolver {
     }
 
     /// Compute the state value of the cross solving search.
-    pub fn cross_state_value(state: &CubieCube) -> u32 {
+    fn cross_state_value(state: &CubieCube) -> u32 {
         let centres = state.center;
         let edges = state.get_edges_d();
         let mut value = 0;

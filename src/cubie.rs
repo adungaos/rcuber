@@ -407,11 +407,16 @@ impl CubieCube {
         self.edge_multiply(b);
     }
 
-    /// Multiply this cubie cube with another cubie cube b.
+    /// Apply single move to this cubie cube.
+    pub fn multiply_move(&mut self, m: Move) {
+        self.multiply(AMCT.amc[m as usize]);
+    }
+
+    /// Apply some moves to this cubie cube.
     pub fn multiply_moves(&mut self, moves: &Vec<Move>) {
         moves
             .iter()
-            .for_each(|&m| self.multiply(BSCT.bsc[m as usize]));
+            .for_each(|&m| self.multiply(AMCT.amc[m as usize]));
     }
 
     /// Set the twist of the 8 corners. 0 <= twist < 2187 in phase 1, twist = 0 in phase 2.
@@ -693,23 +698,41 @@ impl CubieCube {
     }
 }
 
-struct BasicMoveCubeTables {
-    bsc: [CubieCube; 18],
+// struct BasicMoveCubeTables {
+//     bsc: [CubieCube; 18],
+// }
+// impl BasicMoveCubeTables {
+//     pub fn new() -> Self {
+//         let mut bsc = [CubieCube::default(); 18];
+//         for i in 0..18 {
+//             bsc[i] = bsc[i].apply_move(ALL_MOVES[i]);
+//         }
+//         Self { bsc }
+//     }
+// }
+
+// /// 18 basic move cube tables.
+// /// [U, U2, U3, R, R2, R3, F, F2, F3, D, D2, D3, L, L2, L3, B, B2, B3]
+// #[dynamic]
+// static BSCT: BasicMoveCubeTables = BasicMoveCubeTables::new();
+
+struct AllMoveCubeTables {
+    amc: [CubieCube; 55],
 }
-impl BasicMoveCubeTables {
+impl AllMoveCubeTables {
     pub fn new() -> Self {
-        let mut bsc = [CubieCube::default(); 18];
-        for i in 0..18 {
-            bsc[i] = bsc[i].apply_move(ALL_MOVES[i]);
+        let mut amc = [CubieCube::default(); 55];
+        for i in 0..55 {
+            amc[i] = amc[i].apply_move(ALL_MOVES_FULL[i]);
         }
-        Self { bsc }
+        Self { amc }
     }
 }
 
-/// 18 basic move cube tables.
-/// [U, U2, U3, R, R2, R3, F, F2, F3, D, D2, D3, L, L2, L3, B, B2, B3]
+/// All move cube tables.
+/// [U, U2, U3, R, R2, R3, F, F2, F3, D, D2, D3, L, L2, L3, B, B2, B3, M, M2, M3, E, E2, E3, S, S2, S3, Uw, Uw2, Uw3, Rw, Rw2, Rw3, Fw, Fw2, Fw3, Dw, Dw2, Dw3, Lw, Lw2, Lw3, Bw, Bw2, Bw3, x, x2, x3, y, y2, y3, z, z2, z3, N]
 #[dynamic]
-static BSCT: BasicMoveCubeTables = BasicMoveCubeTables::new();
+static AMCT: AllMoveCubeTables = AllMoveCubeTables::new();
 
 /// Rotate array arr right between left and right. right is included.
 pub fn rotate_right<T: Copy>(arr: &mut [T], left: usize, right: usize) {

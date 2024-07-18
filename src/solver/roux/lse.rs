@@ -1,6 +1,8 @@
-use crate::cubie::{CubieCube, SOLVED_CUBIE_CUBE};
-use crate::moves::Move::{self, *};
 use std::collections::{HashMap, HashSet};
+
+use crate::cubie::{CubieCube, SOLVED_CUBIE_CUBE};
+use crate::facelet::Color;
+use crate::moves::Move::{self, *};
 
 use super::get_available_move;
 
@@ -47,7 +49,7 @@ pub struct LSESolver {
     min_depth: i32,
     max_depth: i32,
     solution: Vec<Move>,
-    pub pruner: LSEPruner,
+    pruner: LSEPruner,
     moveset: Vec<Move>,
     next_moves: HashMap<Move, Vec<Move>>,
 }
@@ -148,19 +150,19 @@ impl LSESolver {
 }
 
 #[derive(Debug)]
-pub struct LSEPruner {
+struct LSEPruner {
     max_depth: u8,
     dist: Vec<u8>,
 }
 
 impl LSEPruner {
     pub fn new() -> Self {
-        let size = 12usize.pow(6) * 4 * 4;
+        let size = 12usize.pow(6) * 4 * 4 / 2;
         let solved_states = vec![CubieCube::default()];
         let max_depth = 6;
         let moves = vec![U, U2, U3, M, M2, M3];
 
-        let mut dist: Vec<u8> = Vec::new();
+        let mut dist: Vec<u8> = Vec::with_capacity(size);
         for _ in 0..size {
             dist.push(255);
         }
@@ -195,11 +197,12 @@ impl LSEPruner {
                 enc[idx] = edge_encode[i] * 2 + cube.eo[i] as usize;
             }
         }
-        let mut edge_enc = 0;
+        let mut enc_e = 0;
         for i in 0..6 {
-            edge_enc = edge_enc * 12 + enc[i];
+            enc_e = enc_e * 12 + enc[i];
         }
-        edge_enc * 4 * 4 + cube.center[0] as usize * 4 + cube.cp[0] as usize
+        let enc_c = if cube.center[0] == Color::U {0} else {1};
+        enc_e * 4 + enc_c * 4 + cube.cp[0] as usize
     }
 
     fn query(&self, cube: &CubieCube) -> u8 {
