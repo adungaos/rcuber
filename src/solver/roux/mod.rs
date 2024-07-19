@@ -1,4 +1,4 @@
-//! # Roux 
+//! # Roux
 //! `Roux` is a Rubik's cube speedsolving method invented by Gilles Roux.
 //! Roux is based on Blockbuilding and Corners First methods.
 //! It is notable for its low movecount, lack of rotations, heavy use of M moves in the last step, and adaptability to One-Handed Solving.
@@ -12,20 +12,21 @@
 //! 4b. Solve the UL and UR edges, preserving edge orientation. After this step, both the left and right side layers should be complete.
 //! 4c. Solve the centers and edges in the M slice. This step is sometimes also called L4E or L4EP. see Last Six Edges.
 
-/// Module for Roux's first step, solve First Block.
-pub mod fb;
-/// Module for Roux's second step, solve Second Block.
-pub mod sb;
-/// Module for Roux's fourth step, solve LSE(Last Six Edges).
-pub mod lse;
 /// Module for Roux's third step, solve the corners of the last layer without considering the M-slice.
 pub mod cmll;
+/// Module for Roux's first step, solve First Block.
+pub mod fb;
+/// Module for Roux's fourth step, solve LSE(Last Six Edges).
+pub mod lse;
+/// Module for Roux's second step, solve Second Block.
+pub mod sb;
 
+use std::collections::{HashMap, HashSet};
 
-pub use fb::FBSolver;
-pub use sb::SBSolver;
 pub use cmll::CMLLSolver;
+pub use fb::FBSolver;
 pub use lse::LSESolver;
+pub use sb::SBSolver;
 
 use crate::{
     cubie::{CubieCube, SOLVED_CUBIE_CUBE},
@@ -90,6 +91,146 @@ impl RouxSolver {
         result.append(&mut _lse);
         assert!(self.is_solved());
         result
+    }
+}
+
+/// Configuration for Solver.
+#[derive(Debug)]
+pub struct SolverConfig {
+    min_depth: i32,
+    max_depth: i32,
+    moveset: Vec<Move>,
+    next_moves: HashMap<Move, Vec<Move>>,
+}
+
+/// Solver Base for XXSolver(FB, SB, LSE).
+pub trait SolverBase {
+    fn new(cube: CubieCube) -> Self;
+    fn is_solved(&self) -> bool;
+    fn solve(&mut self) -> Vec<Move>;
+    fn solve_depth(
+        cube: &CubieCube,
+        min_depth: i32,
+        max_depth: i32,
+        config: &mut SolverConfig,
+        pruner: &impl Pruner,
+        encode: fn(&CubieCube) -> usize,
+    ) -> Vec<Move> {
+        config.min_depth = min_depth;
+        config.max_depth = max_depth;
+        let cube = cube.clone();
+        let solution = Self::search(
+            &cube,
+            0,
+            &Vec::new(),
+            pruner.query(&cube),
+            &config,
+            pruner,
+            encode,
+        );
+        solution
+    }
+
+    fn search(
+        cube: &CubieCube,
+        depth: i32,
+        solution: &Vec<Move>,
+        d: u8,
+        config: &SolverConfig,
+        pruner: &impl Pruner,
+        encode: fn(&CubieCube) -> usize,
+    ) -> Vec<Move> {
+        if d == 0 {
+            return solution.clone();
+            // return true;
+        } else {
+            if depth >= config.max_depth {
+                return Vec::new();
+            };
+            if d as i32 + depth > config.max_depth {
+                return Vec::new();
+            } else {
+                return Self::expand(cube, depth, solution, config, pruner, encode);
+            }
+        }
+    }
+    fn expand(
+        cube: &CubieCube,
+        depth: i32,
+        solution: &Vec<Move>,
+        config: &SolverConfig,
+        pruner: &impl Pruner,
+        encode: fn(&CubieCube) -> usize,
+    ) -> Vec<Move> {
+        let mut solution = solution.clone();
+        let available_moves = match solution.len() > 0 {
+            true => config
+                .next_moves
+                .get(&solution[solution.len() - 1])
+                .unwrap()
+                .clone(),
+            false => config.moveset.clone(),
+        };
+        let mut seen_encodings = HashSet::new();
+        seen_encodings.insert(encode(cube));
+
+        for m in available_moves.iter() {
+            let new_cube = cube.apply_move(*m);
+            let enc = encode(&new_cube);
+            if seen_encodings.len() == 0 || !seen_encodings.contains(&enc) {
+                seen_encodings.insert(enc);
+                solution.push(*m);
+                let st = Self::search(
+                    &new_cube,
+                    depth + 1,
+                    &solution,
+                    pruner.query(&new_cube),
+                    config,
+                    pruner,
+                    encode,
+                );
+                solution.pop();
+                if st.len() > 0 {
+                    return st;
+                }
+            }
+        }
+        Vec::new()
+    }
+}
+
+/// Pruner Base for XXPruner(FB, SB, LSE).
+pub trait Pruner {
+    fn new() -> Self;
+    fn encode(cube: &CubieCube) -> usize;
+    fn query(&self, cube: &CubieCube) -> u8;
+    fn init(
+        size: usize,
+        encode: fn(&CubieCube) -> usize,
+        moveset: &Vec<Move>,
+        max_depth: u8,
+    ) -> Vec<u8> {
+        let solved_states = vec![CubieCube::default()];
+        let mut dist: Vec<u8> = Vec::with_capacity(size);
+        for _ in 0..size {
+            dist.push(255);
+        }
+        let mut frontier = solved_states.clone();
+        for i in 0..max_depth {
+            let mut new_frontier = Vec::new();
+            for state in frontier {
+                for m in moveset.iter() {
+                    let new_state = state.apply_move(*m);
+                    let idx = encode(&new_state);
+                    if dist[idx] == 255 {
+                        dist[idx] = i as u8 + 1;
+                        new_frontier.push(new_state);
+                    }
+                }
+            }
+            frontier = new_frontier;
+        }
+        dist
     }
 }
 

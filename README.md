@@ -17,7 +17,7 @@ Rust Cuber, 一个Rust版本的魔方(Rubick's Cube)库，支持终端展示和�
   * LB: 4 vs 5
   * SB: 7 vs 6
   * LSE：6 vs 5
-* Roux相关代码重构，去除重复代码。
+* ~~Roux相关代码重构，去除重复代码（使用Trait完成部分修改）。~~
 * 注释和代码清理。
 
 ### 参考资料

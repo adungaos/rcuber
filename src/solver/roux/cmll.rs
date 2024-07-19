@@ -10,6 +10,7 @@ use std::collections::HashMap;
 /// ```rust
 /// use rcuber::cubie::CubieCube;
 /// use rcuber::moves::Formula;
+/// use rcuber::solver::roux::SolverBase;
 /// use rcuber::solver::roux::fb::FBSolver;
 /// use rcuber::solver::roux::sb::SBSolver;
 /// use rcuber::solver::roux::cmll::CMLLSolver;
@@ -379,7 +380,7 @@ mod tests {
     use super::super::fb::FBSolver;
     use super::super::sb::SBSolver;
     use super::CMLLSolver;
-    use crate::{cubie::CubieCube, moves::Formula};
+    use crate::{cubie::CubieCube, moves::Formula, solver::roux::SolverBase};
 
     #[test]
     fn test_cmll() {

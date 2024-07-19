@@ -1,6 +1,6 @@
 [package]
 name = "rcuber"
-version = "0.7.19"
+version = "0.7.20"
 edition = "2021"
 description = "crate for rubiks cube and solver (LBL, CFOP, Roux, min2phase)"
 authors = [
